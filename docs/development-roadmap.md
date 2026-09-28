@@ -63,13 +63,18 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 5: WACC & Discount Rate Engine *(Status: Planned)*
-- **Objective:** Compute the Weighted Average Cost of Capital (WACC) reflecting enterprise operating and financial risk.
-- **Key Capabilities:**
-  - Cost of Equity estimation via the Capital Asset Pricing Model (CAPM).
-  - Beta estimation, raw vs. adjusted betas, and Hamada unlevering/relevering routines.
-  - Pre-tax and after-tax Cost of Debt schedules with effective marginal tax shield calculations.
-  - Capital structure weightings based on market capitalization and net debt.
+### Phase 5: WACC & Discount Rate Engine *(Status: Complete)*
+- **Objective:** Compute a transparent, deterministic Weighted Average Cost of Capital (WACC) reflecting enterprise operating and financial risk.
+- **Key Deliverables:**
+  - Dedicated WACC estimation engine (`src/wacc/`) decoupled from Streamlit UI and historical records.
+  - Cost of Equity computation via Capital Asset Pricing Model (CAPM): $K_e = R_f + (\beta \times \text{ERP})$.
+  - Pre-tax Cost of Debt calculation supporting user-entered spreads or historical accounting interest estimates ($\text{Interest Expense} / \text{Debt}$) with non-zero denominator protection.
+  - After-tax Cost of Debt: $K_{d,\text{after}} = K_d \times (1 - t)$ with source provenance tracking across manual statutory rates, Phase 4 forecast tax scenarios, or historical effective tax rates.
+  - Capital structure weights: $W_e = E / (E + D)$, $W_d = D / (E + D)$ based on market capitalization or balance sheet book equity proxy (with explicit proxy warning flags).
+  - Strict debt qualification: Interest-bearing debt only (Short-Term + Long-Term Debt), explicitly excluding accounts payable and operating liabilities.
+  - Blended WACC formulation: $\text{WACC} = (W_e \times K_e) + (W_d \times K_{d,\text{after}})$.
+  - Named WACC case persistence via `WaccModel` entities in SQLite, supporting multiple named scenarios per valuation project.
+  - Streamlit interface (`app/pages/wacc.py`) featuring headline KPI cards, interactive assumption tabs, provenance notes, Plotly capital structure donut and contribution bar charts, and model audit diagnostics.
 
 ---
 

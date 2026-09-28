@@ -86,6 +86,11 @@ class ValuationProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    wacc_models = relationship(
+        "WaccModel",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ValuationProject id={self.id} name='{self.name}' company_id={self.company_id} status='{self.status}'>"
@@ -189,4 +194,24 @@ class ForecastModel(Base):
 
     def __repr__(self) -> str:
         return f"<ForecastModel id={self.id} name='{self.name}' project_id={self.project_id} horizon={self.horizon_years}>"
+
+
+class WaccModel(Base):
+    """Persisted WACC assumption set and capital cost configuration."""
+
+    __tablename__ = "wacc_models"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("valuation_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    assumptions_json = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    project = relationship("ValuationProject", back_populates="wacc_models")
+
+    def __repr__(self) -> str:
+        return f"<WaccModel id={self.id} name='{self.name}' project_id={self.project_id}>"
 

@@ -27,6 +27,7 @@ from app.pages.manual_entry import render_manual_entry_page
 from app.pages.import_data import render_import_data_page
 from app.pages.historical_analysis import render_historical_analysis_page
 from app.pages.forecasting import render_forecasting_page
+from app.pages.wacc import render_wacc_page
 
 
 def setup_page_configuration() -> None:
@@ -45,7 +46,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 4 Active", status="Forecasting Engine Ready")
+        render_phase_badge(phase_text="Phase 5 Active", status="WACC Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -77,8 +78,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 4 • AI-Powered DCF Valuation Engine. "
-            "WACC estimation and DCF valuation models scheduled in subsequent phases."
+            "© Phase 5 • AI-Powered DCF Valuation Engine. "
+            "DCF valuation models scheduled in Phase 6."
         )
 
     return selected_page
@@ -94,21 +95,20 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 4 Active")
+    st.subheader("📌 Project Status: Phase 5 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Financial Forecasting & Projections Engine Active**\n\n"
-            "Phase 4 delivers transparent multi-year financial statement projections and Unlevered Free Cash Flow (UFCF) "
-            "schedules. Forward-looking models are calibrated from verified historical actuals with user-configurable drivers: "
-            "revenue growth rates, gross margins, operating expense ratios, working capital cycles (DSO, DIO, DPO), "
-            "CapEx intensity, and effective corporate tax rates. Scenarios can be versioned and saved to the project database."
+            "**Current Status: WACC & Discount Rate Engine Active**\n\n"
+            "Phase 5 delivers transparent Cost of Capital estimation combining the Capital Asset Pricing Model (CAPM) "
+            "for Cost of Equity, After-Tax Cost of Debt with interest deductibility tax shields, and market/book capital structure weights. "
+            "Named WACC cases can be versioned, audited with source provenance notes, and saved directly to the project database."
         )
         st.warning(
-            "**Notice:** Discounting, Weighted Average Cost of Capital (WACC), terminal value formulas, and DCF equity valuations "
-            "are scheduled for subsequent phases (Phases 5-6). Forecasts represent user assumptions and not investment recommendations."
+            "**Notice:** DCF valuation discounting, Gordon Growth terminal value formulas, and equity value per share bridges "
+            "are scheduled for Phase 6. WACC outputs represent analytical cost-of-capital estimates and not certified financial advice."
         )
 
     with status_col2:
@@ -124,8 +124,8 @@ def render_home_page() -> None:
         {"Phase": "Phase 1", "Title": "Project Foundation & Architecture", "Focus": "Repository structure, configuration, shell, and docs", "Status": "Complete"},
         {"Phase": "Phase 2", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
         {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
-        {"Phase": "Phase 4 (Current)", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
-        {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Planned"},
+        {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
+        {"Phase": "Phase 5 (Current)", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Planned"},
         {"Phase": "Phase 7", "Title": "Scenario Analysis", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Planned"},
         {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
@@ -193,25 +193,7 @@ def main() -> None:
         render_forecasting_page()
 
     elif selected_page == "WACC":
-        render_placeholder_card(
-            title="⚖️ WACC Estimation & Discount Rate",
-            phase="Phase 5",
-            target_module="src.valuation",
-            description=(
-                "Estimation of the Weighted Average Cost of Capital (WACC) to establish "
-                "the appropriate discount rate reflecting enterprise operating and financial risk."
-            ),
-            planned_capabilities=[
-                "Cost of Equity calculation via Capital Asset Pricing Model (CAPM).",
-                "Beta estimation (raw beta, adjusted beta, unlevered and relevered industry beta).",
-                "Pre-tax and effective after-tax Cost of Debt calculation.",
-                "Target capital structure weighting based on market values of equity and debt.",
-            ],
-            prerequisites=[
-                "Phase 2 Company balance sheet and capital structure records (Ready)",
-                "Phase 4 Financial forecasting and NOPAT schedules (Ready)",
-            ],
-        )
+        render_wacc_page()
 
     elif selected_page == "DCF Valuation":
         render_placeholder_card(
