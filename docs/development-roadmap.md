@@ -198,8 +198,32 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 12: AI-Assisted Document & Financial Statement Analysis *(Status: Planned — Next Active Phase)*
-- **Objective:** Provide automated synthesis of regulatory financial filings.
-- **Key Capabilities:**
-  - Automated extraction of financial footnotes and risk factors from 10-K and 10-Q reports.
-  - Contextual AI summary cards highlighting key growth drivers and management commentary.
+### Phase 12: AI-Assisted Document & Financial Statement Analysis *(Status: Complete)*
+- **Objective:** Provide automated SEC 10-K and 10-Q filing discovery, official US-GAAP taxonomy statement extraction with human-in-the-loop review, and grounded AI footnote disclosure analysis.
+- **Key Deliverables:**
+  - Dedicated filing discovery and document analysis package (`src/filings/`) completely decoupled from presentation logic and database direct access.
+  - Polite, rate-limited SEC EDGAR client (`SecEdgarClient` in `src/filings/edgar_client.py`) compliant with SEC user-agent policies, token-bucket pacing (<=10 req/s), CIK resolution, submissions query, and local caching.
+  - Filing structure parser (`FilingParser` in `src/filings/parser.py`) identifying Item 8 Financial Statements, footnote sections, and discrete disclosures with line/paragraph references.
+  - Official US-GAAP taxonomy facts extractor (`StatementExtractor` in `src/filings/extractor.py`) mapping standard SEC XBRL concepts (Revenues, COGS, EBIT, D&A, Balance Sheet items, CFO, CapEx) to canonical line-item codes with confidence scoring and side-by-side original label display.
+  - Institutional AI footnote analyzer (`FootnoteAiAnalyzer` in `src/filings/ai_analyzer.py`) analyzing disclosures across 10 core categories:
+    1. Revenue recognition & accounting policies (ASC 606)
+    2. Debt structures, credit facilities, interest rates & covenants
+    3. Leases & right-of-use commitments (ASC 842)
+    4. Commitments, contingencies & legal proceedings (ASC 450)
+    5. Segment reporting & geographic breakdown (ASC 280)
+    6. Income taxes, effective rate reconciliations & deferred tax valuation allowances (ASC 740)
+    7. Impairments, goodwill & finite-lived intangibles (ASC 350/820)
+    8. Related-party transactions & executive governance (ASC 850)
+    9. Changes in accounting estimates & FASB standard adoptions
+    10. Capital structure, equity repurchase plans & subsequent events
+  - Strict grounding: separates explicit facts stated in filings from analytical/valuation implications, quotes verbatim source passages, and never invents citations or buy/sell advice.
+  - Interactive user review workflow: supports marking observations as `Pending`, `Reviewed`, `Flagged Relevant`, `Not Relevant`, or `Requires Follow-up` with analyst audit notes.
+  - Human-in-the-loop approval workflow: allows analysts to review candidate line items, adjust canonical mappings, edit values, choose duplicate conflict policies (Skip vs. Overwrite), and atomically approve them into project historical records via `ImportBatch` with full audit provenance (`source_type="sec_filing"`).
+  - Alternative offline document intake: supports uploading local `.htm`, `.html`, `.txt`, `.json` filings for offline parsing and analysis without active internet requests.
+  - Streamlit user interface (`app/pages/document_analysis.py`) featuring 4 dedicated workflow tabs: Filing Discovery & Intake, Statement Extraction & Approval, AI Footnote Analysis, and Document Viewer & Audit Lineage.
+  - Dual navigation access: top-level sidebar navigation `"Document & Filing Analysis"` and sub-module link under `"Company & Financial Data"`.
+
+---
+
+## Roadmap Completion Status: 12 of 12 Phases Complete
+All twelve architectural phases of the **AI-Powered DCF Valuation and Sensitivity Engine** have been successfully implemented and verified. The platform delivers an end-to-end institutional workflow: from multi-source historical financial statement ingestion, historical analysis, multi-year driver-based forecasting, CAPM WACC estimation, multi-method DCF valuation, Base/Bull/Bear scenario planning, 2D sensitivity matrices, Monte Carlo simulation, multi-format reporting (PDF/CSV/Excel), interactive visual dashboards, live formula-linked spreadsheet models, to automated SEC filing discovery and AI-assisted footnote disclosure analysis.

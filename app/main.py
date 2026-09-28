@@ -33,6 +33,7 @@ from app.pages.scenarios import render_scenarios_page
 from app.pages.sensitivity import render_sensitivity_page
 from app.pages.dashboard import render_dashboard_page
 from app.pages.reports import render_reports_page
+from app.pages.document_analysis import render_document_analysis_page
 
 
 def setup_page_configuration() -> None:
@@ -51,7 +52,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 11 Active", status="Dynamic Model Linking Ready")
+        render_phase_badge(phase_text="Phase 12 Complete", status="All 12 Phases Active")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -59,6 +60,7 @@ def render_sidebar() -> str:
         navigation_options = [
             "Home",
             "Company & Financial Data",
+            "Document & Filing Analysis",
             "Historical Analysis",
             "Forecasting",
             "WACC",
@@ -89,8 +91,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 11 • AI-Powered DCF Valuation Engine. "
-            "Dynamic formula-linked financial model exports active."
+            "© Phase 12 • AI-Powered DCF Valuation Engine. "
+            "All 12 engineering phases fully delivered."
         )
 
     return selected_page
@@ -107,23 +109,25 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 11 Active")
+    # Status Banner
+    st.markdown("---")
+    st.subheader("📌 Project Status: All 12 Phases Complete (v0.12.0)")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Dynamic Excel Financial Model Formula Linking Active**\n\n"
-            "Phase 11 delivers live formula-linked spreadsheet exports generated via `openpyxl`. "
-            "The dynamic financial model features full cross-sheet formulas connecting editable Assumptions "
-            "to multi-year Forecast statements, WACC estimations, DCF cash flow discounting schedules, "
-            "terminal value derivations, and the Enterprise-to-Equity valuation bridge. "
-            "Users can edit operational and valuation drivers directly in Excel and observe instant recalculation."
+            "**Institutional Valuation & AI Document Engine Fully Active**\n\n"
+            "All 12 planned engineering phases of the platform are operational. "
+            "Phase 12 delivers automated SEC 10-K and 10-Q filing discovery, US-GAAP taxonomy facts extraction, "
+            "human-in-the-loop statement verification and project import, and grounded AI footnote disclosure analysis. "
+            "Financial models feature live-linked multi-tab Excel formulas, interactive Plotly valuation waterfalls, "
+            "and probabilistic sensitivity simulations."
         )
         st.info(
-            "**Notice:** Phase 12 will deliver AI-assisted document and SEC regulatory filing analysis. "
-            "Exported financial models reflect deterministic formula relationships and do not constitute "
-            "investment advice or future price predictions."
+            "**Compliance Notice:** This platform is an institutional analytical support and valuation modeling engine. "
+            "It does not generate investment recommendations, buy/sell ratings, or predicted market returns. "
+            "All analyses reflect user-selected assumptions and official regulatory disclosures."
         )
 
     with status_col2:
@@ -146,8 +150,8 @@ def render_home_page() -> None:
         {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver heatmaps, Monte Carlo", "Status": "Complete"},
         {"Phase": "Phase 9", "Title": "Reporting, Presentation & Export Engine", "Focus": "Multi-page PDF reports, openpyxl Excel models, CSVs, in-app preview", "Status": "Complete"},
         {"Phase": "Phase 10", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration", "Status": "Complete"},
-        {"Phase": "Phase 11 (Current)", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Complete"},
-        {"Phase": "Phase 12 (Next)", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
+        {"Phase": "Phase 11", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Complete"},
+        {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Complete"},
     ]
 
     for item in roadmap_data:
@@ -155,10 +159,7 @@ def render_home_page() -> None:
         cols[0].markdown(f"**{item['Phase']}**")
         cols[1].markdown(item["Title"])
         cols[2].caption(item["Focus"])
-        if item["Status"] == "Complete":
-            cols[3].markdown("🟢 `Complete`")
-        else:
-            cols[3].markdown("⏳ `Planned`")
+        cols[3].markdown("🟢 `Complete`")
 
 
 def render_company_and_financial_data_section() -> None:
@@ -171,6 +172,7 @@ def render_company_and_financial_data_section() -> None:
             "📊 Historical Financial Records",
             "✍️ Manual Data Entry",
             "📥 Import (CSV / Excel)",
+            "📑 SEC Filings & AI Analysis",
         ],
         horizontal=True,
         key="data_mgmt_sub_nav",
@@ -188,6 +190,8 @@ def render_company_and_financial_data_section() -> None:
         render_manual_entry_page()
     elif sub_section == "📥 Import (CSV / Excel)":
         render_import_data_page()
+    elif sub_section == "📑 SEC Filings & AI Analysis":
+        render_document_analysis_page()
 
 
 def main() -> None:
@@ -200,6 +204,9 @@ def main() -> None:
 
     elif selected_page == "Company & Financial Data":
         render_company_and_financial_data_section()
+
+    elif selected_page == "Document & Filing Analysis":
+        render_document_analysis_page()
 
     elif selected_page == "Historical Analysis":
         render_historical_analysis_page()

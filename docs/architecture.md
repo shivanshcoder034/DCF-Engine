@@ -419,4 +419,50 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
    - When opened in Microsoft Excel, LibreOffice Calc, or Google Sheets, the spreadsheet application automatically recalculates all formula trees and displays the evaluated numbers.
    - Saved scenario comparisons, sensitivity grids, and Monte Carlo percentile statistics are preserved from stored model records with clear labels distinguishing live-calculated cells from static scenario reference tables.
 
+---
+
+### 21. AI-Assisted Document & Financial Statement Analysis Architecture (`src/filings/`)
+
+| Module | Core Responsibility |
+| :--- | :--- |
+| `src/filings/models.py` | Domain dataclasses and enumerations: `FilingFormType`, `FootnoteCategory` (10 core accounting categories), `ObservationReviewStatus` (pending, reviewed, relevant, not_relevant, requires_followup), `FilingMetadata`, `ExtractedStatementItem`, `FootnoteObservationData`, and `FilingAnalysisBundle`. |
+| `src/filings/edgar_client.py` | `SecEdgarClient`: Polite, rate-limited HTTP interface to the official SEC EDGAR system. Enforces SEC User-Agent identification policy, token-bucket pacing (<=10 req/s), CIK resolution from ticker symbols, submission listings retrieval, XBRL company facts retrieval, and local filesystem document caching. |
+| `src/filings/parser.py` | `FilingParser`: Document parsing engine extracting clean text from filing HTML/text, isolating Item 8 Financial Statements and Footnotes, identifying discrete note headings using compiled regex heuristics, and preserving section references and paragraph offsets. |
+| `src/filings/extractor.py` | `StatementExtractor`: Standardized mapping engine reconciling official US-GAAP taxonomy concept tags (`RevenueFromContractWithCustomerExcludingAssessedTax`, `OperatingIncomeLoss`, `AssetsCurrent`, `Liabilities`, `NetCashProvidedByUsedInOperatingActivities`, etc.) with platform canonical line-item codes (`STANDARD_LINE_ITEMS`). Assigns confidence scores and pairs reported labels with canonical candidates. |
+| `src/filings/ai_analyzer.py` | `FootnoteAiAnalyzer`: Institutional financial NLP and disclosure analysis engine examining filing footnotes across 10 critical accounting dimensions. Strictly distinguishes explicit filing statements from analytical/valuation implications, quotes verbatim passages, and supports optional external LLM enhancement when API keys are configured. |
+| `src/filings/services.py` | `FilingService`: Transactional service coordinator managing SQLite persistence for `SecFiling` and `FilingObservation` records, updating analyst review statuses, and executing the atomic statement approval workflow into `ImportBatch` and `FinancialDataPoint` records. |
+| `app/pages/document_analysis.py` | Centralized Streamlit interface featuring 4 dedicated workflow tabs: Filing Discovery & Intake, Statement Extraction & Approval, AI Footnote & Disclosure Analysis, and Document Viewer & Audit Lineage. |
+
+---
+
+### 22. Human-in-the-Loop Review & Statement Import Approval Boundaries
+
+1. **Non-Destructive Extraction Pipeline:**
+   - Discovered and parsed filings are never automatically written into project financial records without explicit analyst verification.
+   - The user review interface displays candidate extracted line items side-by-side:
+     - Original SEC Tag / Reported Label
+     - Candidate Canonical Mapping (user-selectable from catalog)
+     - Extracted Numeric Value (editable)
+     - Statement Type (Income Statement, Balance Sheet, Cash Flow)
+     - Period Type (Annual vs. Quarterly) and Reporting End Date
+     - Confidence Score
+   - Analysts may check or uncheck individual items, adjust mappings, and select duplicate conflict handling (`skip` vs. `overwrite`).
+
+2. **Audit Provenance & Historical Data Integration:**
+   - Approved items are persisted atomically into `FinancialDataPoint` records via `FinancialDataService.save_import_batch`:
+     - `source_type`: `sec_filing`
+     - `source_reference`: `SEC 10-K (Accession: 0000320193-25-000079)`
+     - `data_classification`: `reported_actual`
+     - `source_reporting_date`: filing period end date
+   - An immutable `ImportBatch` record documents the exact timestamp, filing accession number, accepted record count, and import notes.
+   - Newly imported statements become immediately selectable across Phase 3 (Historical Analysis), Phase 4 (Forecasting), Phase 5 (WACC), Phase 6 (DCF), Phase 10 (Dashboards), and Phase 11 (Dynamic Excel Models) without requiring data re-entry.
+   - Existing saved forecasts, WACC models, DCF valuation cases, scenario sets, and sensitivity analyses are never automatically recalculated or overwritten upon filing import, protecting audit integrity.
+
+3. **Responsible AI Footnote Analysis Principles:**
+   - **Factual Grounding:** All AI footnote observations are extracted directly from retrieved filing sections. Citations specify exact note headings and paragraph locations.
+   - **Separation of Facts from Implications:** Each observation strictly segregates explicit facts stated in the filing from potential valuation or modeling implications.
+   - **No Investment Advice:** The engine generates zero buy/sell recommendations, stock price forecasts, or return predictions.
+   - **User Audit Annotation:** Analysts can annotate observations with custom notes and assign statuses (`Pending`, `Reviewed`, `Flagged Relevant`, `Not Relevant`, `Requires Follow-up`).
+
+
 

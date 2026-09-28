@@ -50,6 +50,11 @@ class Company(Base):
         cascade="all, delete-orphan",
         passive_deletes=False,
     )
+    filings = relationship(
+        "SecFiling",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         ticker_str = f" ({self.ticker})" if self.ticker else ""
@@ -328,4 +333,69 @@ class ReportModel(Base):
 
     def __repr__(self) -> str:
         return f"<ReportModel id={self.id} name='{self.name}' project_id={self.project_id} title='{self.title}'>"
+
+
+class SecFiling(Base):
+    """Persisted SEC regulatory filing metadata and ingestion status."""
+
+    __tablename__ = "sec_filings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)
+    ticker = Column(String(32), nullable=True, index=True)
+    cik = Column(String(20), nullable=False, index=True)
+    company_name = Column(String(255), nullable=False)
+    form_type = Column(String(20), nullable=False, index=True)  # 10-K, 10-Q, 10-K/A, 10-Q/A
+    accession_number = Column(String(50), nullable=False, unique=True, index=True)
+    filing_date = Column(Date, nullable=False, index=True)
+    report_date = Column(Date, nullable=False, index=True)
+    fiscal_year = Column(Integer, nullable=True)
+    fiscal_period = Column(String(10), nullable=True)  # FY, Q1, Q2, Q3, Q4
+    primary_document = Column(String(255), nullable=True)
+    primary_doc_url = Column(String(500), nullable=True)
+    local_cache_path = Column(String(500), nullable=True)
+    status = Column(String(50), default="Discovered", nullable=False)  # Discovered, Retrieved, Parsed, Analyzed
+    is_amended = Column(Integer, default=0, nullable=False)
+    amends_accession = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    company = relationship("Company", back_populates="filings")
+    observations = relationship(
+        "FilingObservation",
+        back_populates="filing",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:
+        return f"<SecFiling id={self.id} form='{self.form_type}' ticker='{self.ticker}' period={self.report_date}>"
+
+
+class FilingObservation(Base):
+    """AI-assisted or NLP-extracted disclosure observation from a filing."""
+
+    __tablename__ = "filing_observations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    filing_id = Column(Integer, ForeignKey("sec_filings.id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(100), nullable=False, index=True)
+    summary = Column(Text, nullable=False)
+    source_section = Column(String(255), nullable=True)
+    source_location = Column(String(255), nullable=True)
+    source_quote = Column(Text, nullable=True)
+    explicit_facts = Column(Text, nullable=True)
+    potential_implications = Column(Text, nullable=True)
+    confidence_score = Column(Float, default=1.0, nullable=False)
+    review_status = Column(String(50), default="pending", nullable=False, index=True)  # pending, reviewed, relevant, not_relevant, requires_followup
+    user_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    filing = relationship("SecFiling", back_populates="observations")
+
+    def __repr__(self) -> str:
+        return f"<FilingObservation id={self.id} filing_id={self.filing_id} cat='{self.category}' status='{self.review_status}'>"
+
 

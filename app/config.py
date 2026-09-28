@@ -36,8 +36,8 @@ class AppConfig:
     # Application Metadata
     app_name: str = "AI-Powered DCF Valuation and Sensitivity Engine"
     app_short_name: str = "DCF Valuation Engine"
-    app_version: str = "0.11.0"
-    app_phase: str = "Phase 11: Dynamic Excel Financial Model Formula Linking"
+    app_version: str = "0.12.0"
+    app_phase: str = "Phase 12: AI-Assisted Document & Financial Statement Analysis"
 
     # Environment
     environment: str = field(
@@ -54,6 +54,19 @@ class AppConfig:
     )
     log_level: str = field(
         default_factory=lambda: os.getenv("LOG_LEVEL", "INFO").upper()
+    )
+
+    # SEC EDGAR Access Configuration
+    sec_user_agent: str = field(
+        default_factory=lambda: os.getenv("SEC_USER_AGENT", "DCFValuationEngine/1.0 (research@dcf-engine.org)")
+    )
+
+    # Optional AI Analysis Keys (Built-in NLP analyzer functions without keys)
+    gemini_api_key: Optional[str] = field(
+        default_factory=lambda: os.getenv("GEMINI_API_KEY")
+    )
+    openai_api_key: Optional[str] = field(
+        default_factory=lambda: os.getenv("OPENAI_API_KEY")
     )
 
     # Core Directories (all based on PROJECT_ROOT via pathlib)

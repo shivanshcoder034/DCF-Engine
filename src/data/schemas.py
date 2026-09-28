@@ -75,6 +75,8 @@ class SourceType(str, Enum):
     MANUAL_ENTRY = "manual_entry"
     CSV_IMPORT = "csv_import"
     EXCEL_IMPORT = "excel_import"
+    SEC_FILING = "sec_filing"
+    DOCUMENT_EXTRACTION = "document_extraction"
 
 
 class FinancialUnit(str, Enum):

@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 11: Dynamic Excel Financial Model Formula Linking** (v0.11.0). The application features an institutional, dynamic, formula-linked financial model export engine generating 8-sheet Excel workbooks with live formula linking across Assumptions, Forecast, WACC, and DCF Valuation schedules, alongside a unified financial dashboard, scenario analysis, sensitivity engine, and multi-format reporting.
+> **Active Development Status:** The repository has completed **Phase 12: AI-Assisted Document & Financial Statement Analysis** (v0.12.0) — **All 12 Phases Complete!** The platform features automated SEC 10-K and 10-Q filing discovery, official US-GAAP taxonomy statement extraction with human-in-the-loop verification, and grounded AI footnote disclosure analysis, alongside live-formula spreadsheet exports, interactive visual dashboards, scenario planning, and Monte Carlo sensitivity simulations.
 
 ---
 
@@ -10,7 +10,7 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-Key capabilities delivered in Phases 1–11:
+Key capabilities delivered across all 12 Phases:
 - **Phase 1 (Foundation):** Clean decoupled architecture, centralized configuration using `pathlib.Path`, and modular Streamlit shell.
 - **Phase 2 (Data Management):** Persistent SQLite storage with SQLAlchemy ORM, company profiles, valuation project workspaces, manual three-statement data entry, and multi-step CSV/Excel spreadsheet imports with column auto-mapping and full audit provenance.
 - **Phase 3 (Historical Analysis):** Multi-year revenue growth, CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, historical UFCF estimates, and accounting integrity audit diagnostics.
@@ -67,12 +67,18 @@ Key capabilities delivered in Phases 1–11:
   - **Valuation Waterfall Bridge:** Enterprise-to-Equity valuation bridge waterfall chart (`go.Waterfall`) transitioning from PV of cash flows and PV of terminal value to Enterprise Value, applying balance sheet bridge adjustments down to Equity Value.
   - **Terminal Value Share & Cash Flow Discounting:** Donut chart of terminal value contribution with high-share diagnostic alerts (>75% of EV), and nominal vs present value cash-flow discounting trajectories.
   - **Linked Scenario & Sensitivity Exploration:** Grouped Base/Bull/Bear valuation and share price comparisons, assumption override audit tables, 2D sensitivity matrix heatmaps with baseline indicators (`★`), and Monte Carlo distribution histograms with percentile reference lines.
-- **Phase 11 (Dynamic Excel Financial Model Formula Linking — Current):**
+- **Phase 11 (Dynamic Excel Financial Model Formula Linking):**
   - **Dynamic Inter-Sheet Formula Linking:** Multi-tab Excel workbook generation via `openpyxl` with live formulas connecting inputs on the Assumptions sheet to forward projections, WACC estimations, discounting schedules, and the enterprise-to-equity valuation bridge.
   - **8 Institutional Sheets:** Read Me & Model Guide, Historical Financials, Assumptions, Forecast Projections, WACC Analysis, DCF Valuation & Equity Bridge, Scenario Analysis, and Sensitivity & Simulation.
   - **Color-Coded User Inputs:** Soft canary yellow fill (`#FEF9C3`) with gold borders identifying editable driver cells (growth rates, margins, turnover days, tax rates, CAPM inputs, terminal values, and balance sheet items).
   - **Spreadsheet Auto-Recalculation:** Configured `wb.calculation.fullCalcOnLoad = True` so spreadsheet applications (Excel, Calc, Sheets) automatically recalculate the entire formula graph upon open.
   - **Dual Export Workflow:** In-app selection in the Export Center between static Excel reports for executive distribution and dynamic formula-linked financial models for interactive scenario editing.
+- **Phase 12 (AI-Assisted Document & Financial Statement Analysis — Final Planned Phase):**
+  - **SEC EDGAR Regulatory Filing Discovery:** Automated discovery of official 10-K and 10-Q filings by stock ticker or SEC CIK with date filtering, accession tracking, amended filing flags, and direct EDGAR links.
+  - **Official US-GAAP Taxonomy Extraction:** Reconciles tagged XBRL facts to canonical platform line items (`revenue`, `cogs`, `ebit`, `cfo`, `capex`, balance sheet items) with side-by-side original label displays and confidence scores.
+  - **Human-in-the-Loop Review & Approval:** Side-by-side verification interface allowing analysts to review candidate line items, adjust canonical mappings, edit values, choose duplicate conflict policies, and approve records into project historical records via `ImportBatch`.
+  - **Grounded AI Footnote Disclosure Analysis:** Analyzes footnotes across 10 critical accounting dimensions (Revenue Recognition, Debt & Covenants, Leases, Contingencies, Segment Reporting, Taxes, Impairments, Related-Party, Accounting Changes, and Capital Structure).
+  - **Audit Provenance & Review Status:** Segregates explicit filing facts from potential valuation implications, quotes verbatim passages, and supports user review annotations (`Pending`, `Reviewed`, `Flagged Relevant`, `Not Relevant`, `Requires Follow-up`).
 
 ---
 
@@ -102,6 +108,7 @@ dcf-valuation-engine/
 │   │   ├── financial_data.py   # Historical statement records & provenance viewer
 │   │   ├── manual_entry.py     # Manual financial statement line-item entry form
 │   │   ├── import_data.py      # CSV/Excel multi-step import processor & preview
+│   │   ├── document_analysis.py # SEC 10-K/10-Q filing discovery, US-GAAP extraction & AI footnote analysis
 │   │   ├── historical_analysis.py # Historical analysis view, Plotly charts & audit
 │   │   ├── forecasting.py      # Financial forecasting & UFCF projection view
 │   │   ├── wacc.py             # WACC estimation, CAPM, cost of debt & capital structure view
@@ -119,13 +126,21 @@ dcf-valuation-engine/
 │   ├── __init__.py
 │   ├── data/                   # Data management, persistence & validation layer
 │   │   ├── __init__.py
-│   │   ├── models.py           # SQLAlchemy ORM models (Company, DcfModel, ScenarioModel, ReportModel, etc.)
+│   │   ├── models.py           # SQLAlchemy ORM models (Company, DcfModel, SecFiling, FilingObservation, etc.)
 │   │   ├── database.py         # Engine configuration & session context manager
 │   │   ├── schemas.py          # Enums, standard line-item catalog & DTOs
 │   │   ├── validators.py       # Multi-field structural & accounting validator
 │   │   ├── repository.py       # Encapsulated data access objects (CRUD)
 │   │   ├── services.py         # Transactional service coordinators
 │   │   └── importers.py        # CSV/Excel parser, auto-mapping & preview
+│   ├── filings/                # SEC Ingestion & AI Footnote Analysis (Phase 12)
+│   │   ├── __init__.py
+│   │   ├── models.py           # FilingMetadata, ExtractedStatementItem, FootnoteObservationData
+│   │   ├── edgar_client.py     # Rate-limited SEC EDGAR client, CIK resolution & facts query
+│   │   ├── parser.py           # HTML/text parser isolating Item 8 statements & footnote sections
+│   │   ├── extractor.py        # US-GAAP taxonomy concept to canonical line-item mapper
+│   │   ├── ai_analyzer.py      # Grounded footnote analyzer across 10 accounting categories
+│   │   └── services.py         # Filing persistence, observation management & approval coordinator
 │   ├── analysis/               # Historical financial analysis engine (Phase 3)
 │   │   ├── __init__.py
 │   │   ├── engine.py           # Analysis orchestrator, scale & currency alignment
@@ -184,7 +199,8 @@ dcf-valuation-engine/
 │   └── dcf_engine.db           # Generated local database (ignored by Git)
 │
 ├── data/                       # Designated directory for local raw files/datasets
-│   └── .gitkeep
+│   ├── .gitkeep
+│   └── sec_filings/            # Cached SEC EDGAR submissions, facts, and documents
 │
 ├── docs/                       # Technical & architectural documentation
 │   ├── architecture.md         # Detailed architectural layers & design rules
@@ -251,17 +267,18 @@ python -m streamlit run app/main.py
 | **Phase 9** | **Reporting, Presentation & Export** | Multi-page PDF reports, openpyxl Excel models, CSVs | **Complete** |
 | **Phase 10** | **Financial Dashboards & Visualizations** | Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration | **Complete** |
 | **Phase 11** | **Dynamic Excel Formula Linking** | openpyxl financial models with dynamic formulas | **Complete** |
-| **Phase 12** | AI-Assisted Document Analysis | Automated 10-K extraction and footnote synthesis | *Planned (Next)* |
+| **Phase 12** | **AI-Assisted Document Analysis** | Automated 10-K extraction, footnote parsing, and risk commentary | **Complete** |
 
 ---
 
 ## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 11)
-- Automated SEC 10-K filing ingestion, section splitting, and AI footnote parsing belong to Phase 12.
-- Formula Recalculation in Excel: While `openpyxl` generates active, valid spreadsheet formulas and configures `fullCalcOnLoad = True`, `openpyxl` itself does not execute a calculation engine; formulas are dynamically evaluated upon opening the `.xlsx` workbook in spreadsheet software (Microsoft Excel, LibreOffice Calc, Google Sheets).
-- Valuation models, sensitivity matrices, and simulated distributions describe analytical outputs under user-selected assumptions and historical statements; they do not constitute certified investment advice, recommendations, confidence intervals, or guaranteed future prices.
+### Operational Capabilities (Phase 12 Complete)
+- All 12 planned engineering phases of the platform are fully implemented and operational.
+- **SEC EDGAR Access:** Document discovery and XBRL facts retrieval interface with official public SEC EDGAR endpoints. A valid User-Agent header (format: `AppName/Version ContactEmail`) must be configured via `SEC_USER_AGENT` to comply with SEC fair access policies.
+- **Formula Recalculation:** The `openpyxl` Python library writes formula strings without calculating cached numerical results; full formula recalculation is evaluated automatically upon opening the `.xlsx` workbook in spreadsheet software (Microsoft Excel, LibreOffice Calc, Google Sheets) due to `fullCalcOnLoad = True`.
+- **Analytical Decision Support:** Valuation models, sensitivity matrices, simulated distributions, and AI footnote summaries describe analytical observations under user-selected assumptions and regulatory filings; they do not constitute certified investment advice, buy/sell ratings, or guaranteed future prices.
 
 ### Important Disclaimer
-> **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.
+> **Not Investment Advice:** This software application is designed for institutional financial analysis, educational research, and valuation modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs or AI-generated observations should be relied upon for investment decisions without independent verification by qualified financial professionals.
 
