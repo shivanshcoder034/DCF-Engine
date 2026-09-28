@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 2: Company Profiles & Financial Data Management**. Users can create and manage company profiles, configure valuation project workspaces, persist three-statement historical financial data via SQLite and SQLAlchemy, record manual statement entries, and import multi-period CSV/Excel files with automated column mapping, verification, and audit provenance. Future analytical phases (historical ratios, forecasts, WACC, DCF valuation) are scheduled sequentially.
+> **Active Development Status:** The repository has completed **Phase 3: Historical Financial Analysis**. The application features an immutable, deterministic financial analysis engine that processes stored multi-period historical statements, evaluates growth rates, multi-year CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, and historical Unlevered Free Cash Flow (UFCF) analytical estimates with interactive Plotly visual charts and accounting integrity audit diagnostics.
 
 ---
 
@@ -10,15 +10,19 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-Key capabilities delivered in Phase 2:
-- **Company Profile Management:** Full CRUD management for corporate profiles (name, ticker, exchange, sector, industry, country, reporting currency, fiscal year end, description) with project deletion safeguards.
-- **Valuation Project Workspaces:** Dedicated valuation engagements linked to specific companies, supporting active/archived lifecycles.
-- **Normalized Financial Statement Persistence:** Atomic, normalized storage for three core financial statement types (`income_statement`, `balance_sheet`, `cash_flow_statement`) supporting both `annual` and `quarterly` frequencies.
-- **Data Classification & Provenance:** Explicit tagging of every figure as `reported_actual`, `normalized`, `adjustment`, or `assumption`, with complete source provenance and audit trail tracking.
-- **Standard & Custom Line Items:** Rich standard line-item catalog (Revenue, COGS, EBITDA, Net Income, PP&E, Operating Cash Flow, CapEx, etc.) with seamless extensibility for custom account items.
-- **Manual Data Entry:** Dedicated form interface with real-time structural validation and custom line-item support.
-- **Multi-Format Ingestion (CSV & Excel):** Intelligent import processor supporting `.csv` and `.xlsx` workbooks with multi-sheet detection, heuristic column auto-mapping, validation preview, and configurable duplicate resolution (skip vs. overwrite).
-- **Downloadable CSV Import Template:** Built-in template generator ensuring quick data alignment.
+Key capabilities delivered in Phases 1–3:
+- **Phase 1 (Foundation):** Clean decoupled architecture, centralized configuration using `pathlib.Path`, and modular Streamlit shell.
+- **Phase 2 (Data Management):** Persistent SQLite storage with SQLAlchemy ORM, company profiles, valuation project workspaces, manual three-statement data entry, and multi-step CSV/Excel spreadsheet imports with column auto-mapping and full audit provenance.
+- **Phase 3 (Historical Analysis - Current):**
+  - **Revenue & Growth:** Period-over-period growth rates and multi-year CAGR calculations across valid chronological periods.
+  - **Profitability Margins:** Gross Profit Margin, EBITDA Margin, EBIT Margin, and Net Profit Margin, clearly distinguishing reported vs. derived figures and properly handling negative profits.
+  - **Operating Expenses & D&A:** OpEx and Depreciation & Amortization intensity (% of revenue).
+  - **Working Capital Analysis:** Net Working Capital ($CA - CL$), Operating Working Capital ($AR + Inventory - AP$), and period changes ($\Delta NWC$).
+  - **Working Capital Efficiency:** Days Sales Outstanding (DSO), Days Inventory Outstanding (DIO), Days Payables Outstanding (DPO), and Cash Conversion Cycle ($CCC = DSO + DIO - DPO$) using average balances or labeled ending-balance approximations.
+  - **Tax Rate Analysis:** Effective tax rate calculations ($Tax / PBT$) with sign normalization and unprofitable period checks.
+  - **Cash Flow Diagnostics:** Operating Cash Flow (CFO), CapEx intensity, Operating Cash Flow Less CapEx, and historical Unlevered Free Cash Flow (UFCF) analytical estimates ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$).
+  - **Interactive Plotly Charts:** Dual-axis revenue & YoY growth charts, multi-metric margin evolution lines, CFO vs. CapEx bars, and working capital cycle visualizations.
+  - **Data Quality & Audit Panel:** Automated audit checks verifying balance sheet equilibrium ($Assets = Liabilities + Equity$), period continuity, and conflicting multi-version records.
 
 ---
 
@@ -47,7 +51,8 @@ dcf-valuation-engine/
 │   │   ├── projects.py         # Valuation project workspaces & status manager
 │   │   ├── financial_data.py   # Historical statement records & provenance viewer
 │   │   ├── manual_entry.py     # Manual financial statement line-item entry form
-│   │   └── import_data.py      # CSV/Excel multi-step import processor & preview
+│   │   ├── import_data.py      # CSV/Excel multi-step import processor & preview
+│   │   └── historical_analysis.py # Historical analysis view, Plotly charts & audit
 │   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
 │       ├── badges.py
@@ -64,7 +69,14 @@ dcf-valuation-engine/
 │   │   ├── repository.py       # Encapsulated data access objects (CRUD)
 │   │   ├── services.py         # Transactional service coordinators
 │   │   └── importers.py        # CSV/Excel parser, auto-mapping & preview
-│   ├── analysis/               # Historical ratios, trends, and margin analysis (Phase 3)
+│   ├── analysis/               # Historical financial analysis engine (Phase 3)
+│   │   ├── __init__.py
+│   │   ├── engine.py           # Analysis orchestrator, scale & currency alignment
+│   │   ├── metrics.py          # Growth, CAGR, profitability margins, tax rates
+│   │   ├── working_capital.py  # NWC, Operating NWC, DSO, DIO, DPO, CCC
+│   │   ├── cash_flow.py        # CFO, CapEx, OCF less CapEx, UFCF estimate
+│   │   ├── formatting.py       # Formatted statement & ratio DataFrames
+│   │   └── models.py           # Strongly typed metric & bundle dataclasses
 │   ├── valuation/              # DCF calculations, WACC, and terminal value (Phases 5-6)
 │   ├── forecasting/            # Driver-based financial forecasting & UFCF (Phase 4)
 │   ├── scenarios/              # Scenario profiles: Base, Bull, Bear (Phase 7)
@@ -128,33 +140,13 @@ python -m streamlit run app/main.py
 
 ---
 
-## 5. Financial Data Management Guide
-
-### Managing Companies & Projects
-1. Navigate to **Company & Financial Data** -> **🏢 Companies**.
-2. Register a new company profile with legal name, country, reporting currency, and optional ticker/exchange.
-3. Switch to **📁 Valuation Projects** to initialize a new valuation workspace linked to the company.
-
-### Ingesting Historical Statements
-1. **Manual Entry:** Select **✍️ Manual Data Entry**, pick your active project, choose the statement type (`Income Statement`, `Balance Sheet`, `Cash Flow`), select the period frequency and dates, select a line item from the catalog (or add a custom item), enter the numeric value, and save.
-2. **CSV / Excel Import:**
-   - Go to **📥 Import (CSV / Excel)**.
-   - Download the built-in template or upload an existing financial spreadsheet (`.csv` or `.xlsx`).
-   - Select the target sheet for Excel workbooks.
-   - Review or adjust the auto-mapped column headers.
-   - Inspect the validation preview (accepted rows, rejected rows with exact error reasons).
-   - Select your duplicate conflict resolution policy (`Skip Duplicates` or `Overwrite Duplicates`).
-   - Click **Confirm & Save Validated Records** to persist atomically.
-
----
-
-## 6. 12-Phase Development Roadmap
+## 5. 12-Phase Development Roadmap
 
 | Phase | Milestone | Focus Area | Status |
 | :---: | :--- | :--- | :---: |
 | **Phase 1** | **Foundation & Architecture** | Repository structure, configuration, shell, and docs | **Complete** |
 | **Phase 2** | **Company & Financial Data** | SQLAlchemy models, statement storage, CSV/Excel imports | **Complete** |
-| **Phase 3** | Historical Financial Analysis | Margins, CAGR, growth trends, working capital cycles | *Planned* |
+| **Phase 3** | **Historical Financial Analysis** | Growth, margins, working capital cycles, cash flow analysis | **Complete** |
 | **Phase 4** | Forecasting & Free Cash Flows | Driver-based revenue models, OpEx schedules, UFCF | *Planned* |
 | **Phase 5** | WACC & Discount Rate Engine | CAPM, cost of debt, tax rates, capital weighting | *Planned* |
 | **Phase 6** | DCF Valuation & Terminal Value | Gordon Growth, Exit Multiples, Enterprise & Equity Value | *Planned* |
@@ -167,12 +159,12 @@ python -m streamlit run app/main.py
 
 ---
 
-## 7. Current Limitations & Disclaimer
+## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 2)
-- Financial ratio calculations, forecasting routines, WACC models, and DCF discounting will be implemented in subsequent phases (Phases 3 through 6).
-- Stored financial figures remain unmutated as historical data points.
-- Third-party live market data feeds (e.g. real-time ticker quotes) are not connected in this phase.
+### Current Limitations (Phase 3)
+- Future financial forecasting (revenue drivers, expense schedules, working capital forecasts) belongs to Phase 4.
+- Weighted Average Cost of Capital (WACC) estimation and DCF enterprise/equity valuation models belong to Phases 5 and 6.
+- The historical UFCF figure presented is an unprojected analytical metric ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$) evaluating historical cash flow generation, not a forecast or discounted valuation output.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

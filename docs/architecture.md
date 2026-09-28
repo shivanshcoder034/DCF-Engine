@@ -7,9 +7,9 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 - **Separation of Concerns (SoC):** The presentation layer (`app/`) is completely decoupled from the data management and analytical engines (`src/`). Under no circumstances should database queries, ORM manipulation, or financial calculation formulas be embedded directly within user interface components.
 - **Service & Repository Pattern:** Database access is encapsulated within repository classes (`src/data/repository.py`), while transactional workflows, validation enforcement, and business integrity rules reside in service layer classes (`src/data/services.py`).
-- **Atomic Persistence & Controlled Initialization:** SQLite database tables are created idempotently via SQLAlchemy (`src/data/database.py`). Session lifecycle is managed through scoped context managers ensuring automatic commit on success and rollback on exceptions.
-- **Full Provenance & Auditability:** Every financial record maintains an auditable chain of custody, capturing its origin (manual entry vs. file import), source reference, import batch identifier, publication date, and data classification.
-- **Non-Mutating Data Ingestion:** Historical financial figures are ingested and stored exactly as entered or reported. No calculated totals, margins, ratios, or inferred values are injected during the data-management phase.
+- **Pure Analytical Engines (`src/analysis/`):** Historical analysis is implemented as stateless, deterministic computational functions that consume verified records from the data layer and return strongly typed result dataclasses and DataFrames without mutating stored historical records.
+- **Transparent Provenance & Integrity:** The system rigorously distinguishes reported historical actuals from derived metrics (e.g., calculated gross profits or EBITDA estimates). No calculated metrics are ever written back into raw financial record tables as fake reported numbers.
+- **Audit Diagnostics:** The engine systematically audits input consistency, flagging accounting equation imbalances ($Assets \ne Liabilities + Equity$), period discontinuities, and conflicting multi-version records.
 
 ---
 
@@ -20,10 +20,20 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 │                       Presentation Layer                        │
 │                 (Streamlit Interface / Visuals)                 │
 │      app/main.py  │  app/pages/  │  app/components/             │
-│      - companies.py      - projects.py                          │
-│      - financial_data.py - manual_entry.py - import_data.py     │
+│      - companies.py           - projects.py                     │
+│      - financial_data.py      - manual_entry.py                 │
+│      - import_data.py         - historical_analysis.py          │
 └───────────────────────────────┬─────────────────────────────────┘
-                                │ Invokes transactional services
+                                │ Invokes analysis & services
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                 Historical Analysis Engine Layer                │
+│                         (src/analysis/)                         │
+│   src/analysis/engine.py          │  src/analysis/metrics.py    │
+│   src/analysis/working_capital.py │  src/analysis/cash_flow.py  │
+│   src/analysis/formatting.py      │  src/analysis/models.py     │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ Queries normalized records
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Data Management & Service Layer              │
@@ -41,146 +51,61 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
                                 │ Serves future engines
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│               Analytical & Valuation Engines (Phases 3-12)      │
-│   src/analysis/   │  src/forecasting/ │  src/valuation/         │
-│   src/scenarios/  │  src/sensitivity/ │  src/exports/           │
+│               Analytical & Valuation Engines (Phases 4-12)      │
+│   src/forecasting/ │  src/valuation/  │  src/scenarios/         │
+│   src/sensitivity/ │  src/exports/                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 3. Data-Management Modules (`src/data/`)
+### 3. Historical Analysis Engine Architecture (`src/analysis/`)
 
 | Module | Core Responsibility |
 | :--- | :--- |
-| `models.py` | SQLAlchemy ORM declarative models: `Company`, `ValuationProject`, `ImportBatch`, and `FinancialDataPoint`. |
-| `database.py` | Engine configuration, thread-safe connection pool, `SessionLocal` factory, and `get_db_session()` context manager. |
-| `schemas.py` | Enums (`StatementType`, `PeriodType`, `DataClassification`, `SourceType`, `FinancialUnit`, `ProjectStatus`), standard line-item catalog (`STANDARD_LINE_ITEMS`), and validation dataclasses. |
-| `validators.py` | Multi-field validation logic verifying dates, types, allowed line-item codes, and numeric integrity. Distinguishes blocking errors from review warnings. |
-| `repository.py` | Encapsulated data-access operations providing typed CRUD and duplicate detection methods. |
-| `services.py` | Transactional coordinators (`CompanyService`, `ProjectService`, `FinancialDataService`) enforcing business logic (e.g. blocking deletion of companies with active projects). |
-| `importers.py` | Ingestion engine for `.csv` and `.xlsx` workbooks, sheet inspector, column auto-mapping heuristics, validation preview, and CSV template generator. |
+| `engine.py` | Coordinates record retrieval via `FinancialDataService`, currency filtering, unit scale harmonization, period alignment, conflict resolution, and quality audit checks. Returns a complete `HistoricalAnalysisBundle`. |
+| `metrics.py` | Pure calculation routines for revenue growth, multi-year CAGR, Gross Profit and Margin, EBITDA and Margin, EBIT and Margin, Net Profit Margin, and Effective Tax Rate. |
+| `working_capital.py` | Calculates Net Working Capital (NWC), Operating Working Capital, period-over-period $\Delta NWC$, Days Sales Outstanding (DSO), Days Inventory Outstanding (DIO), Days Payables Outstanding (DPO), and the Cash Conversion Cycle (CCC). |
+| `cash_flow.py` | Computes Operating Cash Flow (CFO), Capital Expenditure intensity, CFO Less CapEx, and historical Unlevered Free Cash Flow (UFCF) analytical estimates ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$). |
+| `formatting.py` | Formats metrics into multi-period pandas DataFrames for Income Statements, Balance Sheets, Cash Flows, and Efficiency Ratios with explicit type labels (Reported vs. Derived). |
+| `models.py` | Strongly typed dataclasses: `FinancialPeriod`, `MetricResult`, `WorkingCapitalMetrics`, `CashFlowAnalysisMetrics`, `DataQualityIssue`, and `HistoricalAnalysisBundle`. |
 
 ---
 
-### 4. Database Schema & Relational Design
+### 4. Data Selection, Period Alignment, and Conflict Rules
 
-The database utilizes SQLite located at `database/dcf_engine.db` (configurable via `DATABASE_URL`).
-
-```
-┌─────────────────────────┐
-│        Company          │
-├─────────────────────────┤
-│ id (PK, Integer)        │
-│ name (String)           │
-│ ticker (String, opt)    │
-│ exchange (String, opt)  │
-│ country (String)        │
-│ currency (String)       │
-│ fiscal_year_end (String)│
-│ description (Text)      │
-└────────────┬────────────┘
-             │ 1
-             │
-             │ has many
-             ▼ *
-┌─────────────────────────┐           ┌─────────────────────────┐
-│    ValuationProject     │ 1       * │       ImportBatch       │
-├─────────────────────────┼───────────┼─────────────────────────┤
-│ id (PK, Integer)        │           │ id (PK, Integer)        │
-│ company_id (FK)         │           │ project_id (FK)         │
-│ name (String)           │           │ filename (String)       │
-│ description (Text)      │           │ import_timestamp (DT)   │
-│ status (Active/Archiv)  │           │ records_accepted (Int)  │
-└────────────┬────────────┘           │ records_rejected (Int)  │
-             │ 1                      │ status (String)         │
-             │                        └────────────┬────────────┘
-             │ has many                            │ 1
-             ▼ *                                   │ provides batch id
-┌──────────────────────────────────────────────────┴────────────┐
-│                      FinancialDataPoint                       │
-├───────────────────────────────────────────────────────────────┤
-│ id (PK, Integer)                                              │
-│ project_id (FK -> ValuationProject.id)                        │
-│ statement_type (income_statement / balance_sheet / cash_flow) │
-│ line_item_code (String, e.g. 'revenue', 'cogs', 'ppe')        │
-│ display_name (String)                                         │
-│ period_start_date (Date)                                      │
-│ period_end_date (Date)                                        │
-│ period_type (annual / quarterly)                              │
-│ value (Float, supports positive and negative)                 │
-│ currency (String, e.g. 'USD', 'EUR')                          │
-│ unit (units / thousands / millions / billions)                │
-│ data_classification (reported_actual / normalized / etc.)    │
-│ source_type (manual_entry / csv_import / excel_import)        │
-│ source_reference (String, citation or footnote notes)         │
-│ source_reporting_date (Date, publication date)                │
-│ import_batch_id (FK -> ImportBatch.id, nullable)              │
-│ created_at / updated_at (DateTime)                            │
-└───────────────────────────────────────────────────────────────┘
-```
-
-#### Safe Cascading Rules
-- Foreign key `ValuationProject.company_id` uses `RESTRICT`. The `CompanyService` explicitly checks project counts and blocks company deletion if projects exist, preventing accidental data loss.
-- Foreign key `FinancialDataPoint.import_batch_id` uses `SET NULL` on batch deletion, preserving individual data points even if batch records are cleaned up.
+1. **Chronological Period Sorting:**
+   - Financial periods are grouped strictly by `period_end_date` and sorted chronologically.
+   - Frequency isolation: Annual and quarterly periods are never blended into a single comparative time series.
+2. **Currency Integrity:**
+   - Calculations require single-currency consistency. If a project contains records across multiple currencies, the engine isolates records to the dominant or selected currency and logs a `DataQualityIssue(severity="warning")`.
+3. **Duplicate and Conflict Handling:**
+   - If multiple records exist for the same `(project_id, statement_type, line_item_code, period_end_date, data_classification)`, the engine selects the most recently updated record and generates an explicit audit notice detailing the conflicting record IDs.
+4. **Scale Harmonization:**
+   - All stored values are scaled to base monetary units using `FinancialUnit.multiplier(unit)` prior to formula evaluation, ensuring exact consistency across thousands, millions, and raw units.
+5. **Zero Denominator & Undefined Math:**
+   - Zero denominators (e.g. zero revenue for margin calculation, zero prior value for growth, non-positive values for CAGR) produce structured `MetricResult(value=None, status="unavailable", explanation=...)` rather than crashing, fabricating zero, or returning `NaN`/`inf`.
 
 ---
 
-### 5. Financial Data Classifications & Line Items
+### 5. Historical Analysis Output Contracts
 
-#### Data Classifications
-1. `reported_actual`: Official figures directly reported in regulatory filings (10-K, 10-Q, annual reports).
-2. `normalized`: Historical figures adjusted for non-recurring expenses, restructuring, or standard realignments.
-3. `adjustment`: Discretionary analyst pro-forma adjustments.
-4. `assumption`: Baseline calibration assumptions.
-
-#### Supported Statement Types
-- `income_statement`: Operating and non-operating revenue, costs, and earnings.
-- `balance_sheet`: Assets, liabilities, and shareholder equity balances.
-- `cash_flow_statement`: Operating, investing, and financing cash flows.
-
-#### Standard Line-Item Catalog
-A standardized dictionary of financial line items is defined in `src/data/schemas.py`. Users may also input custom line-item codes with custom display names without breaking database schemas.
+Every calculated metric is encapsulated within a `MetricResult` DTO:
+- `metric_code`: Machine-readable identifier (e.g. `revenue_growth`, `gross_margin`, `ebitda_margin`, `ccc`).
+- `metric_name`: Human-readable label.
+- `value`: Numeric float value, or `None` if uncomputable.
+- `unit_or_type`: Output unit (`percentage`, `currency`, `days`, `ratio`).
+- `period_label`: Assigned period tag (e.g. `FY2023`, `Q3 2023`).
+- `is_reported`: Boolean flag clearly distinguishing reported items from derived figures.
+- `source_line_items`: Line-item codes used in the calculation.
+- `status`: Execution status (`calculated`, `reported`, `unavailable`, `warning`).
+- `explanation`: Contextual reason when a metric is unavailable or derived.
 
 ---
 
-### 6. Validation and Ingestion Pipeline
+### 6. Decoupling Rules for Future Phases (Phases 4-12)
 
-Data ingestion follows a strict 8-step pipeline:
-
-```
-[ Upload File (.csv / .xlsx) ]
-             │
-             ▼
-[ Inspect Workbook & Sheet Selection ]
-             │
-             ▼
-[ Column Auto-Mapping (Heuristic Aliases) ]
-             │
-             ▼
-[ User Review / Manual Field Adjustments ]
-             │
-             ▼
-[ Deterministic Validation (src/data/validators.py) ]
-  ├── Hard Errors: Missing dates, non-numeric values, invalid types ──► [ Rejection Log ]
-  └── Soft Warnings: Unusually long/short periods, zero revenues  ─────► [ Review Notices ]
-             │
-             ▼
-[ Duplicate Conflict Check ]
-  ├── Policy A: Skip existing duplicates
-  └── Policy B: Overwrite existing duplicates
-             │
-             ▼
-[ Atomic Transactional Commit ]
-  ├── Create ImportBatch provenance record
-  └── Bulk insert/update FinancialDataPoint records
-```
-
----
-
-### 7. Decoupling Rules for Future Phases
-
-As development progresses into **Phase 3 (Historical Analysis)** and **Phase 4 (Forecasting)**:
-1. Analytical modules must query records through `FinancialDataService` or `FinancialDataRepository`.
-2. Calculated metrics (e.g. gross margins, EBITDA bridges, CAGR) must **never** be saved back into `FinancialDataPoint` rows as fake reported actuals.
-3. Analytical results must be returned as pure Python dataclasses or pandas DataFrames to be rendered by `app/pages/` or exported to Excel.
+As development progresses into **Phase 4 (Financial Forecasting)** and **Phase 5 (WACC)**:
+1. Forecasting routines will consume historical baselines from `HistoricalAnalysisBundle` (e.g. baseline margins, working capital days, CapEx % of revenue).
+2. Future forecast schedules and WACC calculations will reside in their dedicated `src/` modules (`src/forecasting/`, `src/valuation/`) without modifying `src/analysis/` or database records.
+3. The historical analysis engine remains an immutable retrospective audit tool.

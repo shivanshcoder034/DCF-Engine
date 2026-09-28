@@ -17,6 +17,7 @@ from app.pages.projects import render_projects_page
 from app.pages.financial_data import render_financial_data_page
 from app.pages.manual_entry import render_manual_entry_page
 from app.pages.import_data import render_import_data_page
+from app.pages.historical_analysis import render_historical_analysis_page
 
 
 def setup_page_configuration() -> None:
@@ -35,7 +36,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 2 Active", status="Data Layer Ready")
+        render_phase_badge(phase_text="Phase 3 Active", status="Analysis Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -67,8 +68,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 2 • AI-Powered DCF Valuation Engine. "
-            "Financial calculations and analysis models scheduled in subsequent phases."
+            "© Phase 3 • AI-Powered DCF Valuation Engine. "
+            "Forecasting and DCF valuation models scheduled in subsequent phases."
         )
 
     return selected_page
@@ -84,20 +85,21 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 2 Active")
+    st.subheader("📌 Project Status: Phase 3 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Financial Data Management Layer Active**\n\n"
-            "Phase 2 establishes persistent company profile management, valuation project workspaces, "
-            "atomic historical financial statement storage in SQLite, manual record entry, and multi-period "
-            "CSV/Excel file ingestion with automated column mapping, verification, and audit provenance."
+            "**Current Status: Historical Financial Analysis Layer Active**\n\n"
+            "Phase 3 introduces comprehensive historical financial performance analytics: multi-year revenue growth "
+            "and CAGR, profitability margins (Gross, EBITDA, EBIT, Net), effective tax rates, working capital dynamics "
+            "(NWC, Operating NWC, ΔNWC), cash conversion cycle efficiency (DSO, DIO, DPO, CCC), and historical "
+            "cash flow indicators with interactive Plotly visualizations and automated audit diagnostics."
         )
         st.warning(
-            "**Notice:** Financial ratio calculations, forecasting engines, and DCF calculations are "
-            "scheduled for subsequent phases (Phases 3-6). Stored financial figures remain unmutated."
+            "**Notice:** Forecasting engines, WACC calculations, and DCF valuation models are "
+            "scheduled for subsequent phases (Phases 4-6). Historical metrics are computed from verified records."
         )
 
     with status_col2:
@@ -111,8 +113,8 @@ def render_home_page() -> None:
 
     roadmap_data = [
         {"Phase": "Phase 1", "Title": "Project Foundation & Architecture", "Focus": "Repository structure, configuration, shell, and docs", "Status": "Complete"},
-        {"Phase": "Phase 2 (Current)", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
-        {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Ratios, margins, growth trends, working capital cycles", "Status": "Planned"},
+        {"Phase": "Phase 2", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
+        {"Phase": "Phase 3 (Current)", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
         {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Planned"},
         {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Planned"},
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Planned"},
@@ -176,24 +178,7 @@ def main() -> None:
         render_company_and_financial_data_section()
 
     elif selected_page == "Historical Analysis":
-        render_placeholder_card(
-            title="📊 Historical Financial Analysis",
-            phase="Phase 3",
-            target_module="src.analysis",
-            description=(
-                "Diagnostic tooling for reviewing historical operational performance, "
-                "cost structure dynamics, profitability trends, and balance sheet efficiency."
-            ),
-            planned_capabilities=[
-                "Compound Annual Growth Rate (CAGR) calculations for revenue, gross profit, and EBIT.",
-                "Margin evolution tracking (Gross, EBITDA, Operating, and Net margins).",
-                "Working capital cycle metrics (DSO, DIO, DPO, and Cash Conversion Cycle).",
-                "Return metrics including ROIC, ROCE, and ROE.",
-            ],
-            prerequisites=[
-                "Phase 2 Financial statement storage and normalization (Ready)",
-            ],
-        )
+        render_historical_analysis_page()
 
     elif selected_page == "DCF Valuation":
         render_placeholder_card(
@@ -254,7 +239,7 @@ def main() -> None:
                 "Formulaic derivation of Unlevered Free Cash Flow: NOPAT + D&A - CapEx - ΔNWC.",
             ],
             prerequisites=[
-                "Phase 3 Historical financial analysis and baseline ratios",
+                "Phase 3 Historical financial analysis and baseline ratios (Ready)",
             ],
         )
 

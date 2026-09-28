@@ -30,13 +30,19 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 3: Historical Financial Analysis *(Status: Planned)*
-- **Objective:** Compute foundational financial performance metrics, margin trends, and capital efficiency indicators.
-- **Key Capabilities:**
-  - Multi-year Compound Annual Growth Rates (CAGR) for Revenue, Gross Profit, EBITDA, and EBIT.
-  - Margin evolution schedules (Gross Margin, EBITDA Margin, Operating Margin, Net Margin).
-  - Working capital cycle diagnostics (DSO, DIO, DPO, and Cash Conversion Cycle).
-  - Capital return metrics: Return on Invested Capital (ROIC), Return on Capital Employed (ROCE), and Return on Equity (ROE).
+### Phase 3: Historical Financial Analysis *(Status: Complete)*
+- **Objective:** Compute foundational financial performance metrics, margin trends, working capital cycles, and cash flow indicators.
+- **Key Deliverables:**
+  - Dedicated analytical engine (`src/analysis/`) operating on verified historical records.
+  - Multi-year revenue growth and Compound Annual Growth Rates (CAGR).
+  - Profitability margin evolution: Gross Profit Margin, EBITDA Margin, EBIT Margin, and Net Profit Margin.
+  - Operating expense and Depreciation & Amortization intensity analysis.
+  - Net Working Capital (NWC), Operating NWC, and period-over-period $\Delta NWC$.
+  - Working capital efficiency diagnostics: DSO, DIO, DPO, and Cash Conversion Cycle (CCC).
+  - Operating cash flow analysis, CapEx intensity (% revenue), CFO Less CapEx, and historical Unlevered Free Cash Flow (UFCF) analytical estimates.
+  - Multi-period formatted statement tables explicitly distinguishing reported vs. derived figures.
+  - Interactive Plotly visualizations for revenue trends, margins, cash flow vs. CapEx, and working capital cycles.
+  - Automated data-quality and audit diagnostics checking accounting balance sheet equilibrium and period continuity.
 
 ---
 
