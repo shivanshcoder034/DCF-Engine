@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** This repository is currently in **Phase 1: Project Foundation and Architecture**. The application foundation, centralized configuration, and presentation shell are established. Core financial calculations, data pipelines, and valuation algorithms will be implemented in subsequent phases.
+> **Active Development Status:** The repository has completed **Phase 2: Company Profiles & Financial Data Management**. Users can create and manage company profiles, configure valuation project workspaces, persist three-statement historical financial data via SQLite and SQLAlchemy, record manual statement entries, and import multi-period CSV/Excel files with automated column mapping, verification, and audit provenance. Future analytical phases (historical ratios, forecasts, WACC, DCF valuation) are scheduled sequentially.
 
 ---
 
@@ -10,15 +10,15 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-When completed, the engine will support:
-- Company profile management and multi-year historical financial statement ingestion.
-- Comprehensive historical financial analysis (CAGR, margin trends, capital efficiency).
-- Multi-year forecasting of operating metrics and Unlevered Free Cash Flows (UFCF).
-- Weighted Average Cost of Capital (WACC) estimation via CAPM and debt cost schedules.
-- Enterprise Value and Equity Value determination via Perpetual Growth and Exit Multiple methods.
-- Dynamic scenario planning (Base, Bull, Bear) and two-dimensional sensitivity matrices.
-- Dynamic Excel financial model exports with live spreadsheet formulas.
-- Downloadable valuation reports and audit trails.
+Key capabilities delivered in Phase 2:
+- **Company Profile Management:** Full CRUD management for corporate profiles (name, ticker, exchange, sector, industry, country, reporting currency, fiscal year end, description) with project deletion safeguards.
+- **Valuation Project Workspaces:** Dedicated valuation engagements linked to specific companies, supporting active/archived lifecycles.
+- **Normalized Financial Statement Persistence:** Atomic, normalized storage for three core financial statement types (`income_statement`, `balance_sheet`, `cash_flow_statement`) supporting both `annual` and `quarterly` frequencies.
+- **Data Classification & Provenance:** Explicit tagging of every figure as `reported_actual`, `normalized`, `adjustment`, or `assumption`, with complete source provenance and audit trail tracking.
+- **Standard & Custom Line Items:** Rich standard line-item catalog (Revenue, COGS, EBITDA, Net Income, PP&E, Operating Cash Flow, CapEx, etc.) with seamless extensibility for custom account items.
+- **Manual Data Entry:** Dedicated form interface with real-time structural validation and custom line-item support.
+- **Multi-Format Ingestion (CSV & Excel):** Intelligent import processor supporting `.csv` and `.xlsx` workbooks with multi-sheet detection, heuristic column auto-mapping, validation preview, and configurable duplicate resolution (skip vs. overwrite).
+- **Downloadable CSV Import Template:** Built-in template generator ensuring quick data alignment.
 
 ---
 
@@ -26,9 +26,9 @@ When completed, the engine will support:
 
 - **Core Runtime & Computation:** Python (>= 3.10), [pandas](https://pandas.pydata.org/) (>= 2.2.0), [NumPy](https://numpy.org/) (>= 1.26.0)
 - **User Interface & Visualizations:** [Streamlit](https://streamlit.io/) (>= 1.35.0), [Plotly](https://plotly.com/python/) (>= 5.22.0)
-- **Database & ORM Foundation:** [SQLite](https://www.sqlite.org/) (embedded), [SQLAlchemy](https://www.sqlalchemy.org/) (>= 2.0.30)
-- **Financial Model Export Foundation:** [openpyxl](https://openpyxl.readthedocs.io/) (>= 3.1.2)
-- **Configuration Management:** [python-dotenv](https://github.com/theskumar/python-dotenv) (>= 1.0.1)
+- **Database & ORM:** [SQLite](https://www.sqlite.org/) (embedded), [SQLAlchemy](https://www.sqlalchemy.org/) (>= 2.0.30)
+- **Spreadsheet Processing & Model Export:** [openpyxl](https://openpyxl.readthedocs.io/) (>= 3.1.2)
+- **Configuration & Environment Management:** [python-dotenv](https://github.com/theskumar/python-dotenv) (>= 1.0.1)
 
 ---
 
@@ -39,41 +39,48 @@ dcf-valuation-engine/
 │
 ├── app/                        # Presentation & UI layer (Streamlit)
 │   ├── __init__.py             # App package definition
-│   ├── main.py                 # Streamlit entry point & navigation dispatcher
+│   ├── main.py                 # Streamlit entry point, navigation & routing
 │   ├── config.py               # Centralized configuration singleton (pathlib)
-│   ├── pages/                  # Modular UI page views (future phases)
-│   │   └── __init__.py
-│   └── components/             # Reusable UI components (cards, badges)
+│   ├── pages/                  # Modular UI sub-pages
+│   │   ├── __init__.py
+│   │   ├── companies.py        # Company profile directory, editor & creator
+│   │   ├── projects.py         # Valuation project workspaces & status manager
+│   │   ├── financial_data.py   # Historical statement records & provenance viewer
+│   │   ├── manual_entry.py     # Manual financial statement line-item entry form
+│   │   └── import_data.py      # CSV/Excel multi-step import processor & preview
+│   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
 │       ├── badges.py
 │       └── cards.py
 │
 ├── src/                        # Domain logic & financial engine (Decoupled from UI)
 │   ├── __init__.py
-│   ├── data/                   # Data ingestion, schema models, & persistence
-│   │   └── __init__.py
-│   ├── analysis/               # Historical ratios, trends, and margin analysis
-│   │   └── __init__.py
-│   ├── valuation/              # DCF calculations, WACC, and terminal value models
-│   │   └── __init__.py
-│   ├── forecasting/            # Driver-based financial forecasting & UFCF schedules
-│   │   └── __init__.py
-│   ├── scenarios/              # Scenario profiles (Base, Bull, Bear)
-│   │   └── __init__.py
-│   ├── sensitivity/            # 2D sensitivity matrices & simulation engine
-│   │   └── __init__.py
-│   └── exports/                # openpyxl Excel models & report generators
-│       └── __init__.py
+│   ├── data/                   # Data management, persistence & validation layer
+│   │   ├── __init__.py
+│   │   ├── models.py           # SQLAlchemy ORM models (Company, Project, etc.)
+│   │   ├── database.py         # Engine configuration & session context manager
+│   │   ├── schemas.py          # Enums, standard line-item catalog & DTOs
+│   │   ├── validators.py       # Multi-field structural & accounting validator
+│   │   ├── repository.py       # Encapsulated data access objects (CRUD)
+│   │   ├── services.py         # Transactional service coordinators
+│   │   └── importers.py        # CSV/Excel parser, auto-mapping & preview
+│   ├── analysis/               # Historical ratios, trends, and margin analysis (Phase 3)
+│   ├── valuation/              # DCF calculations, WACC, and terminal value (Phases 5-6)
+│   ├── forecasting/            # Driver-based financial forecasting & UFCF (Phase 4)
+│   ├── scenarios/              # Scenario profiles: Base, Bull, Bear (Phase 7)
+│   ├── sensitivity/            # 2D sensitivity matrices & simulation engine (Phase 8)
+│   └── exports/                # Dynamic openpyxl Excel models & report generators (Phase 10)
 │
 ├── database/                   # Designated directory for local SQLite database
-│   └── .gitkeep
+│   ├── .gitkeep
+│   └── dcf_engine.db           # Generated local database (ignored by Git)
 │
 ├── data/                       # Designated directory for local raw files/datasets
 │   └── .gitkeep
 │
 ├── docs/                       # Technical & architectural documentation
 │   ├── architecture.md         # Detailed architectural layers & design rules
-│   └── development-roadmap.md  # Sequenced phased implementation plan
+│   └── development-roadmap.md  # Sequenced 12-phase implementation plan
 │
 ├── .streamlit/
 │   └── config.toml             # Professional finance-themed UI configuration
@@ -86,115 +93,86 @@ dcf-valuation-engine/
 
 ---
 
-## 4. Prerequisites
+## 4. Quick Start & Installation
 
-- **Python:** Python 3.10 to 3.13 installed on your system. Verify with:
-  ```bash
-  python --version
-  ```
-- **Git:** Git version control installed.
-
----
-
-## 5. Installation Instructions
-
-### Step 1: Clone the Repository
-```bash
-git clone <repository-url>
-cd "AI-Powered DCF Valuation and Sensitivity Engine"
-```
-
-### Step 2: Set Up a Virtual Environment (Recommended)
-
-**On Windows (PowerShell):**
+### Step 1: Environment Setup
 ```powershell
+# Windows (PowerShell)
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-```
 
-**On macOS / Linux:**
-```bash
+# Linux / macOS
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 3: Install Dependencies
+### Step 2: Install Dependencies
 ```bash
-python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
----
+### Step 3: Configure Environment
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
 
-## 6. Configuration & Environment Variables
-
-The application uses centralized configuration defined in `app/config.py`. You can customize settings via environment variables or a local `.env` file:
-
-1. Copy `.env.example` to `.env`:
-   ```powershell
-   # Windows PowerShell
-   Copy-Item .env.example .env
-
-   # Linux / macOS
-   cp .env.example .env
-   ```
-
-2. Available environment variables:
-
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `APP_ENV` | `development` | Runtime environment (`development`, `staging`, `production`) |
-| `APP_DEBUG` | `True` | Debug flag (`True` or `False`) |
-| `APP_HOST` | `localhost` | Streamlit host address |
-| `APP_PORT` | `8501` | Streamlit port |
-| `LOG_LEVEL` | `INFO` | Application logging level |
-| `DATABASE_URL` | `sqlite:///database/dcf_engine.db` | Local database connection string |
-| `DATA_DIR` | `data` | Local data cache directory relative to project root |
-| `DATABASE_DIR` | `database` | Local database directory relative to project root |
-| `DOCS_DIR` | `docs` | Documentation directory relative to project root |
-
----
-
-## 7. How to Launch the Application
-
-Run the Streamlit application from the project root directory:
-
-```bash
-streamlit run app/main.py
+# Linux / macOS
+cp .env.example .env
 ```
 
-Or run via Python module:
+### Step 4: Launch the Application
 ```bash
 python -m streamlit run app/main.py
 ```
-
-Once launched, navigate to `http://localhost:8501` in your browser.
+*Navigate to `http://localhost:8501` in your browser.*
 
 ---
 
-## 8. Development Roadmap Summary
+## 5. Financial Data Management Guide
 
-| Phase | Milestone | Scope | Status |
+### Managing Companies & Projects
+1. Navigate to **Company & Financial Data** -> **🏢 Companies**.
+2. Register a new company profile with legal name, country, reporting currency, and optional ticker/exchange.
+3. Switch to **📁 Valuation Projects** to initialize a new valuation workspace linked to the company.
+
+### Ingesting Historical Statements
+1. **Manual Entry:** Select **✍️ Manual Data Entry**, pick your active project, choose the statement type (`Income Statement`, `Balance Sheet`, `Cash Flow`), select the period frequency and dates, select a line item from the catalog (or add a custom item), enter the numeric value, and save.
+2. **CSV / Excel Import:**
+   - Go to **📥 Import (CSV / Excel)**.
+   - Download the built-in template or upload an existing financial spreadsheet (`.csv` or `.xlsx`).
+   - Select the target sheet for Excel workbooks.
+   - Review or adjust the auto-mapped column headers.
+   - Inspect the validation preview (accepted rows, rejected rows with exact error reasons).
+   - Select your duplicate conflict resolution policy (`Skip Duplicates` or `Overwrite Duplicates`).
+   - Click **Confirm & Save Validated Records** to persist atomically.
+
+---
+
+## 6. 12-Phase Development Roadmap
+
+| Phase | Milestone | Focus Area | Status |
 | :---: | :--- | :--- | :---: |
-| **Phase 1** | **Foundation & Architecture** | Project structure, configuration, shell, and docs | **Complete** |
-| **Phase 2** | Company & Financial Data Management | Financial statement schemas, normalization, SQLite persistence | *Planned* |
+| **Phase 1** | **Foundation & Architecture** | Repository structure, configuration, shell, and docs | **Complete** |
+| **Phase 2** | **Company & Financial Data** | SQLAlchemy models, statement storage, CSV/Excel imports | **Complete** |
 | **Phase 3** | Historical Financial Analysis | Margins, CAGR, growth trends, working capital cycles | *Planned* |
-| **Phase 4** | Forecasting & Free Cash Flow Engine | Revenue drivers, operating schedules, UFCF projections | *Planned* |
+| **Phase 4** | Forecasting & Free Cash Flows | Driver-based revenue models, OpEx schedules, UFCF | *Planned* |
 | **Phase 5** | WACC & Discount Rate Engine | CAPM, cost of debt, tax rates, capital weighting | *Planned* |
 | **Phase 6** | DCF Valuation & Terminal Value | Gordon Growth, Exit Multiples, Enterprise & Equity Value | *Planned* |
-| **Phase 7** | Scenario & Sensitivity Analysis | Bull/Bear scenarios, 2D sensitivity matrices, simulations | *Planned* |
-| **Phase 8** | Reporting & Dynamic Excel Exports | openpyxl financial models with live formulas and memos | *Planned* |
-
-For comprehensive phase descriptions, see [docs/development-roadmap.md](file:///c:/Users/mail2/OneDrive/Desktop/AI-Powered%20DCF%20Valuation%20and%20Sensitivity%20Engine/docs/development-roadmap.md).
+| **Phase 7** | Scenario Analysis | Bull/Bear scenarios, parameter overrides, comparisons | *Planned* |
+| **Phase 8** | Sensitivity Analysis & Simulation | 2D sensitivity matrices, driver tornado charts | *Planned* |
+| **Phase 9** | Financial Dashboards | Interactive Plotly statement and valuation charts | *Planned* |
+| **Phase 10** | Dynamic Excel Model Exports | openpyxl financial models with dynamic formulas | *Planned* |
+| **Phase 11** | Valuation Reports & Memos | Institutional PDF/Markdown investment memos | *Planned* |
+| **Phase 12** | AI-Assisted Document Analysis | Automated 10-K extraction and footnote synthesis | *Planned* |
 
 ---
 
-## 9. Current Limitations & Disclaimer
+## 7. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 1)
-- The application currently provides the foundational architecture and presentation shell.
-- Navigation sections for future modules (Phases 2 through 8) are displayed as informational placeholders.
-- Financial calculation engines, database persistence, and external data ingestion are not yet connected.
+### Current Limitations (Phase 2)
+- Financial ratio calculations, forecasting routines, WACC models, and DCF discounting will be implemented in subsequent phases (Phases 3 through 6).
+- Stored financial figures remain unmutated as historical data points.
+- Third-party live market data feeds (e.g. real-time ticker quotes) are not connected in this phase.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

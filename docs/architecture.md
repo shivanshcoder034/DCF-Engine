@@ -5,10 +5,11 @@
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an institutional-grade financial analysis platform. The system is designed following strict software engineering principles:
 
-- **Separation of Concerns (SoC):** The presentation layer (`app/`) is completely decoupled from the analytical and calculation engine (`src/`). Under no circumstances should financial valuation math or forecasting algorithms be embedded directly within user interface components or Streamlit scripts.
-- **Stateless & Pure Calculation Engines:** Modules within `src/` (valuation, forecasting, sensitivity) operate as pure, testable computational engines that receive structured inputs (data models or parameter dataclasses) and return structured outputs (results dataclasses, pandas DataFrames, or matrix structures).
-- **Centralized Configuration:** Paths, runtime settings, and environment variables are resolved through a single source of truth (`app.config.settings`) using Python's `pathlib.Path`, eliminating hardcoded relative paths and working directory dependencies.
-- **Progressive Phased Delivery:** The architecture provides explicit hooks and modular boundaries for each subsequent phase without introducing premature speculative logic or mock calculations.
+- **Separation of Concerns (SoC):** The presentation layer (`app/`) is completely decoupled from the data management and analytical engines (`src/`). Under no circumstances should database queries, ORM manipulation, or financial calculation formulas be embedded directly within user interface components.
+- **Service & Repository Pattern:** Database access is encapsulated within repository classes (`src/data/repository.py`), while transactional workflows, validation enforcement, and business integrity rules reside in service layer classes (`src/data/services.py`).
+- **Atomic Persistence & Controlled Initialization:** SQLite database tables are created idempotently via SQLAlchemy (`src/data/database.py`). Session lifecycle is managed through scoped context managers ensuring automatic commit on success and rollback on exceptions.
+- **Full Provenance & Auditability:** Every financial record maintains an auditable chain of custody, capturing its origin (manual entry vs. file import), source reference, import batch identifier, publication date, and data classification.
+- **Non-Mutating Data Ingestion:** Historical financial figures are ingested and stored exactly as entered or reported. No calculated totals, margins, ratios, or inferred values are injected during the data-management phase.
 
 ---
 
@@ -19,71 +20,167 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 │                       Presentation Layer                        │
 │                 (Streamlit Interface / Visuals)                 │
 │      app/main.py  │  app/pages/  │  app/components/             │
+│      - companies.py      - projects.py                          │
+│      - financial_data.py - manual_entry.py - import_data.py     │
 └───────────────────────────────┬─────────────────────────────────┘
-                                │ Calls typed engines
+                                │ Invokes transactional services
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Analytical & Engine Layer                    │
-│                      (Decoupled Python Logic)                   │
-│   src/valuation/     │   src/forecasting/    │  src/scenarios/  │
-│   src/analysis/      │   src/sensitivity/    │  src/exports/    │
+│                    Data Management & Service Layer              │
+│                           (src/data/)                           │
+│   src/data/services.py    │   src/data/validators.py            │
+│   src/data/importers.py   │   src/data/schemas.py               │
 └───────────────────────────────┬─────────────────────────────────┘
-                                │ Accesses validated records
+                                │ Calls typed repositories
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Data & Storage Layer                       │
-│                   src/data/  │  database/                       │
-│        (SQLite Persistence, SQLAlchemy ORM, File Storage)       │
+│                  Persistence & Repository Layer                 │
+│   src/data/repository.py  │   src/data/models.py                │
+│   src/data/database.py    │   database/dcf_engine.db            │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ Serves future engines
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               Analytical & Valuation Engines (Phases 3-12)      │
+│   src/analysis/   │  src/forecasting/ │  src/valuation/         │
+│   src/scenarios/  │  src/sensitivity/ │  src/exports/           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 3. Directory Layout and Component Roles
+### 3. Data-Management Modules (`src/data/`)
 
-#### `app/` (Presentation & Application Layer)
-- **Role:** Handles user interface rendering, user input collection, page routing, and display orchestration using Streamlit and Plotly.
-- **Key Modules:**
-  - `main.py`: Entry point for the Streamlit application; manages top-level page routing, sidebar navigation, and global page setup.
-  - `config.py`: Centralized configuration singleton (`settings`) defining directory paths, runtime environment, and non-sensitive application metadata.
-  - `pages/`: (Future phases) Modular subpages for multi-page UI implementations as individual views expand.
-  - `components/`: Reusable UI elements (e.g. status badges, layout cards, metric display formatters, input panels).
-- **Boundary Rule:** UI code must only ingest user inputs, call functions in `src/`, and render the returned results. It must never perform raw financial formulas, financial statement adjustments, or direct database queries.
-
-#### `src/` (Core Financial Engine Layer)
-- **Role:** Houses all domain logic, financial modeling, forecasting algorithms, sensitivity engines, and export generators.
-- **Key Packages:**
-  - `src/data/`: Data models, financial statement ingestion, normalization, validation, and database abstraction.
-  - `src/analysis/`: Historical financial statement analysis, growth rates (CAGR), margin trends, and financial ratios.
-  - `src/forecasting/`: Driver-based multi-year financial forecasts, operating bridge models, and Unlevered Free Cash Flow schedules.
-  - `src/valuation/`: Discounted Cash Flow math, WACC estimation (CAPM, cost of debt), terminal value methodologies (Gordon Growth, Exit Multiples), and enterprise-to-equity value bridge.
-  - `src/scenarios/`: Multi-scenario management (Base, Bull, Bear) and parameter override logic.
-  - `src/sensitivity/`: Multi-dimensional sensitivity matrices, tornado analysis, and simulation routines.
-  - `src/exports/`: Excel financial workbook generation with dynamic formulas via `openpyxl`, alongside structured report generation.
-- **Boundary Rule:** `src/` modules must have zero dependencies on `streamlit` or UI libraries. They must remain fully usable as a standalone Python library (e.g., via CLI, automated scripts, or backend APIs).
-
-#### `database/` (Local Persistence Layer)
-- **Role:** Designated local storage directory for the SQLite database file (`dcf_engine.db`) and future migration scripts.
-- **Boundary Rule:** Files in this directory (except `.gitkeep`) are excluded from version control via `.gitignore` to prevent committing local application databases.
-
-#### `data/` (Local File & Cache Store)
-- **Role:** Designated local directory for imported raw files (e.g., company reports, local templates, cached raw statements).
-- **Boundary Rule:** All user-specific data files (except `.gitkeep`) are excluded from Git tracking via `.gitignore`.
-
-#### `docs/` (Technical Documentation)
-- **Role:** Technical reference documentation, architecture design records, development roadmaps, and valuation methodology specifications.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `models.py` | SQLAlchemy ORM declarative models: `Company`, `ValuationProject`, `ImportBatch`, and `FinancialDataPoint`. |
+| `database.py` | Engine configuration, thread-safe connection pool, `SessionLocal` factory, and `get_db_session()` context manager. |
+| `schemas.py` | Enums (`StatementType`, `PeriodType`, `DataClassification`, `SourceType`, `FinancialUnit`, `ProjectStatus`), standard line-item catalog (`STANDARD_LINE_ITEMS`), and validation dataclasses. |
+| `validators.py` | Multi-field validation logic verifying dates, types, allowed line-item codes, and numeric integrity. Distinguishes blocking errors from review warnings. |
+| `repository.py` | Encapsulated data-access operations providing typed CRUD and duplicate detection methods. |
+| `services.py` | Transactional coordinators (`CompanyService`, `ProjectService`, `FinancialDataService`) enforcing business logic (e.g. blocking deletion of companies with active projects). |
+| `importers.py` | Ingestion engine for `.csv` and `.xlsx` workbooks, sheet inspector, column auto-mapping heuristics, validation preview, and CSV template generator. |
 
 ---
 
-### 4. Integration Pattern for Future Modules
+### 4. Database Schema & Relational Design
 
-When new capabilities are introduced in subsequent phases, developers must adhere to the following integration contract:
+The database utilizes SQLite located at `database/dcf_engine.db` (configurable via `DATABASE_URL`).
 
-1. **Define Data Contracts in `src/`:**
-   Create typed dataclasses or Pydantic models in the relevant `src/` package (e.g., `src/valuation/models.py`) specifying input assumptions and output metrics.
-2. **Implement Pure Calculation Functions in `src/`:**
-   Implement standalone, deterministic calculation functions in `src/` that take input models and return calculated output objects.
-3. **Connect to Presentation in `app/`:**
-   In the corresponding `app/` view or page, collect inputs from Streamlit widgets, construct the input dataclass, invoke the calculation function from `src/`, and render the resulting metrics and Plotly charts.
-4. **Decoupled Testing:**
-   Write unit tests directly against `src/` calculation functions without needing to mock or render Streamlit UI sessions.
+```
+┌─────────────────────────┐
+│        Company          │
+├─────────────────────────┤
+│ id (PK, Integer)        │
+│ name (String)           │
+│ ticker (String, opt)    │
+│ exchange (String, opt)  │
+│ country (String)        │
+│ currency (String)       │
+│ fiscal_year_end (String)│
+│ description (Text)      │
+└────────────┬────────────┘
+             │ 1
+             │
+             │ has many
+             ▼ *
+┌─────────────────────────┐           ┌─────────────────────────┐
+│    ValuationProject     │ 1       * │       ImportBatch       │
+├─────────────────────────┼───────────┼─────────────────────────┤
+│ id (PK, Integer)        │           │ id (PK, Integer)        │
+│ company_id (FK)         │           │ project_id (FK)         │
+│ name (String)           │           │ filename (String)       │
+│ description (Text)      │           │ import_timestamp (DT)   │
+│ status (Active/Archiv)  │           │ records_accepted (Int)  │
+└────────────┬────────────┘           │ records_rejected (Int)  │
+             │ 1                      │ status (String)         │
+             │                        └────────────┬────────────┘
+             │ has many                            │ 1
+             ▼ *                                   │ provides batch id
+┌──────────────────────────────────────────────────┴────────────┐
+│                      FinancialDataPoint                       │
+├───────────────────────────────────────────────────────────────┤
+│ id (PK, Integer)                                              │
+│ project_id (FK -> ValuationProject.id)                        │
+│ statement_type (income_statement / balance_sheet / cash_flow) │
+│ line_item_code (String, e.g. 'revenue', 'cogs', 'ppe')        │
+│ display_name (String)                                         │
+│ period_start_date (Date)                                      │
+│ period_end_date (Date)                                        │
+│ period_type (annual / quarterly)                              │
+│ value (Float, supports positive and negative)                 │
+│ currency (String, e.g. 'USD', 'EUR')                          │
+│ unit (units / thousands / millions / billions)                │
+│ data_classification (reported_actual / normalized / etc.)    │
+│ source_type (manual_entry / csv_import / excel_import)        │
+│ source_reference (String, citation or footnote notes)         │
+│ source_reporting_date (Date, publication date)                │
+│ import_batch_id (FK -> ImportBatch.id, nullable)              │
+│ created_at / updated_at (DateTime)                            │
+└───────────────────────────────────────────────────────────────┘
+```
+
+#### Safe Cascading Rules
+- Foreign key `ValuationProject.company_id` uses `RESTRICT`. The `CompanyService` explicitly checks project counts and blocks company deletion if projects exist, preventing accidental data loss.
+- Foreign key `FinancialDataPoint.import_batch_id` uses `SET NULL` on batch deletion, preserving individual data points even if batch records are cleaned up.
+
+---
+
+### 5. Financial Data Classifications & Line Items
+
+#### Data Classifications
+1. `reported_actual`: Official figures directly reported in regulatory filings (10-K, 10-Q, annual reports).
+2. `normalized`: Historical figures adjusted for non-recurring expenses, restructuring, or standard realignments.
+3. `adjustment`: Discretionary analyst pro-forma adjustments.
+4. `assumption`: Baseline calibration assumptions.
+
+#### Supported Statement Types
+- `income_statement`: Operating and non-operating revenue, costs, and earnings.
+- `balance_sheet`: Assets, liabilities, and shareholder equity balances.
+- `cash_flow_statement`: Operating, investing, and financing cash flows.
+
+#### Standard Line-Item Catalog
+A standardized dictionary of financial line items is defined in `src/data/schemas.py`. Users may also input custom line-item codes with custom display names without breaking database schemas.
+
+---
+
+### 6. Validation and Ingestion Pipeline
+
+Data ingestion follows a strict 8-step pipeline:
+
+```
+[ Upload File (.csv / .xlsx) ]
+             │
+             ▼
+[ Inspect Workbook & Sheet Selection ]
+             │
+             ▼
+[ Column Auto-Mapping (Heuristic Aliases) ]
+             │
+             ▼
+[ User Review / Manual Field Adjustments ]
+             │
+             ▼
+[ Deterministic Validation (src/data/validators.py) ]
+  ├── Hard Errors: Missing dates, non-numeric values, invalid types ──► [ Rejection Log ]
+  └── Soft Warnings: Unusually long/short periods, zero revenues  ─────► [ Review Notices ]
+             │
+             ▼
+[ Duplicate Conflict Check ]
+  ├── Policy A: Skip existing duplicates
+  └── Policy B: Overwrite existing duplicates
+             │
+             ▼
+[ Atomic Transactional Commit ]
+  ├── Create ImportBatch provenance record
+  └── Bulk insert/update FinancialDataPoint records
+```
+
+---
+
+### 7. Decoupling Rules for Future Phases
+
+As development progresses into **Phase 3 (Historical Analysis)** and **Phase 4 (Forecasting)**:
+1. Analytical modules must query records through `FinancialDataService` or `FinancialDataRepository`.
+2. Calculated metrics (e.g. gross margins, EBITDA bridges, CAGR) must **never** be saved back into `FinancialDataPoint` rows as fake reported actuals.
+3. Analytical results must be returned as pure Python dataclasses or pandas DataFrames to be rendered by `app/pages/` or exported to Excel.

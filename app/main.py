@@ -1,8 +1,8 @@
 """AI-Powered DCF Valuation and Sensitivity Engine - Application Entry Point.
 
 This module serves as the primary Streamlit shell, establishing the centralized
-navigation structure, application layout, status indicators, and modular placeholders
-for all planned valuation phases.
+navigation structure, application layout, status indicators, and modular routing
+for all valuation phases.
 """
 
 from __future__ import annotations
@@ -12,6 +12,11 @@ import streamlit as st
 from app.config import settings
 from app.components.badges import render_phase_badge
 from app.components.cards import render_placeholder_card
+from app.pages.companies import render_companies_page
+from app.pages.projects import render_projects_page
+from app.pages.financial_data import render_financial_data_page
+from app.pages.manual_entry import render_manual_entry_page
+from app.pages.import_data import render_import_data_page
 
 
 def setup_page_configuration() -> None:
@@ -30,7 +35,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 1 Foundation", status="Active")
+        render_phase_badge(phase_text="Phase 2 Active", status="Data Layer Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -62,8 +67,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 1 Foundation • AI-Powered DCF Valuation Engine. "
-            "Financial calculations and data pipelines scheduled in subsequent phases."
+            "© Phase 2 • AI-Powered DCF Valuation Engine. "
+            "Financial calculations and analysis models scheduled in subsequent phases."
         )
 
     return selected_page
@@ -79,22 +84,20 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 1 Foundation")
+    st.subheader("📌 Project Status: Phase 2 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Foundation Initialized**\n\n"
-            "Phase 1 establishes the core repository architecture, centralized configuration, "
-            "modular package layout, Streamlit application shell, and development roadmap. "
-            "Financial data ingestion, calculation algorithms, and reporting engines will be "
-            "introduced sequentially across upcoming phases."
+            "**Current Status: Financial Data Management Layer Active**\n\n"
+            "Phase 2 establishes persistent company profile management, valuation project workspaces, "
+            "atomic historical financial statement storage in SQLite, manual record entry, and multi-period "
+            "CSV/Excel file ingestion with automated column mapping, verification, and audit provenance."
         )
         st.warning(
-            "**Notice:** This software is currently under active foundation development. "
-            "It does not yet execute live valuation models or provide investment advice. "
-            "All functional calculation modules remain strictly separated in the `src/` hierarchy."
+            "**Notice:** Financial ratio calculations, forecasting engines, and DCF calculations are "
+            "scheduled for subsequent phases (Phases 3-6). Stored financial figures remain unmutated."
         )
 
     with status_col2:
@@ -104,21 +107,25 @@ def render_home_page() -> None:
             st.markdown(f"**{key}:** `{value}`")
 
     st.markdown("---")
-    st.subheader("🗺️ Phased Architectural Roadmap")
+    st.subheader("🗺️ 12-Phase Architectural Roadmap")
 
     roadmap_data = [
-        {"Phase": "Phase 1 (Current)", "Title": "Project Foundation & Architecture", "Focus": "Repository structure, configuration, shell, and docs", "Status": "Complete"},
-        {"Phase": "Phase 2", "Title": "Company & Financial Data Management", "Focus": "Data models, financial statements, and local SQLite persistence", "Status": "Planned"},
-        {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Ratios, margins, growth trends, and balance sheet efficiency", "Status": "Planned"},
-        {"Phase": "Phase 4", "Title": "Projections & Forecasting Engine", "Focus": "Driver-based revenue models and Unlevered Free Cash Flow schedules", "Status": "Planned"},
-        {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, cost of debt, marginal tax rate, and capital weighting", "Status": "Planned"},
-        {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise & Equity Value", "Status": "Planned"},
-        {"Phase": "Phase 7", "Title": "Scenarios & Sensitivity Analysis", "Focus": "Bull/Bear cases, 2D sensitivity matrices, and simulation", "Status": "Planned"},
-        {"Phase": "Phase 8", "Title": "Reporting & Financial Model Exports", "Focus": "Dynamic openpyxl Excel models and summary reports", "Status": "Planned"},
+        {"Phase": "Phase 1", "Title": "Project Foundation & Architecture", "Focus": "Repository structure, configuration, shell, and docs", "Status": "Complete"},
+        {"Phase": "Phase 2 (Current)", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
+        {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Ratios, margins, growth trends, working capital cycles", "Status": "Planned"},
+        {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Planned"},
+        {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Planned"},
+        {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Planned"},
+        {"Phase": "Phase 7", "Title": "Scenario Analysis", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Planned"},
+        {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
+        {"Phase": "Phase 9", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
+        {"Phase": "Phase 10", "Title": "Dynamic Excel Model Exports", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
+        {"Phase": "Phase 11", "Title": "Valuation Reports & Memos", "Focus": "Institutional PDF/Markdown summary memos and audit trails", "Status": "Planned"},
+        {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
     ]
 
     for item in roadmap_data:
-        cols = st.columns([1.5, 2.5, 3.5, 1.2])
+        cols = st.columns([1.5, 2.8, 3.8, 1.2])
         cols[0].markdown(f"**{item['Phase']}**")
         cols[1].markdown(item["Title"])
         cols[2].caption(item["Focus"])
@@ -126,6 +133,35 @@ def render_home_page() -> None:
             cols[3].markdown("🟢 `Complete`")
         else:
             cols[3].markdown("⏳ `Planned`")
+
+
+def render_company_and_financial_data_section() -> None:
+    """Render the functional Company and Financial Data Management hub."""
+    sub_section = st.radio(
+        label="Data Management Sub-Modules",
+        options=[
+            "🏢 Companies",
+            "📁 Valuation Projects",
+            "📊 Historical Financial Records",
+            "✍️ Manual Data Entry",
+            "📥 Import (CSV / Excel)",
+        ],
+        horizontal=True,
+        key="data_mgmt_sub_nav",
+    )
+
+    st.markdown("---")
+
+    if sub_section == "🏢 Companies":
+        render_companies_page()
+    elif sub_section == "📁 Valuation Projects":
+        render_projects_page()
+    elif sub_section == "📊 Historical Financial Records":
+        render_financial_data_page()
+    elif sub_section == "✍️ Manual Data Entry":
+        render_manual_entry_page()
+    elif sub_section == "📥 Import (CSV / Excel)":
+        render_import_data_page()
 
 
 def main() -> None:
@@ -137,24 +173,7 @@ def main() -> None:
         render_home_page()
 
     elif selected_page == "Company & Financial Data":
-        render_placeholder_card(
-            title="🏢 Company & Financial Data Management",
-            phase="Phase 2",
-            target_module="src.data",
-            description=(
-                "Centralized management of target company metadata, securities tickers, "
-                "industry taxonomy, and multi-year historical financial statements."
-            ),
-            planned_capabilities=[
-                "Company profile records (ticker, sector, fiscal year conventions, currency).",
-                "Three-statement financial data storage (Income Statement, Balance Sheet, Cash Flow).",
-                "Data normalization, validation rules, and consistency checks.",
-                "Local persistence layer via SQLite and SQLAlchemy ORM.",
-            ],
-            prerequisites=[
-                "Phase 1 Core Architecture & Configuration (Ready)",
-            ],
-        )
+        render_company_and_financial_data_section()
 
     elif selected_page == "Historical Analysis":
         render_placeholder_card(
@@ -172,7 +191,7 @@ def main() -> None:
                 "Return metrics including ROIC, ROCE, and ROE.",
             ],
             prerequisites=[
-                "Phase 2 Financial statement storage and normalization",
+                "Phase 2 Financial statement storage and normalization (Ready)",
             ],
         )
 
@@ -214,7 +233,7 @@ def main() -> None:
                 "Target capital structure weighting based on market values of equity and debt.",
             ],
             prerequisites=[
-                "Phase 2 Company balance sheet and capital structure records",
+                "Phase 2 Company balance sheet and capital structure records (Ready)",
             ],
         )
 
@@ -262,7 +281,7 @@ def main() -> None:
     elif selected_page == "Sensitivity Analysis":
         render_placeholder_card(
             title="🎯 Sensitivity Analysis & Simulation",
-            phase="Phase 7",
+            phase="Phase 8",
             target_module="src.sensitivity",
             description=(
                 "Rigorous multi-dimensional sensitivity matrices evaluating valuation volatility "
@@ -282,7 +301,7 @@ def main() -> None:
     elif selected_page == "Reports & Exports":
         render_placeholder_card(
             title="📑 Reports & Financial Model Exports",
-            phase="Phase 8",
+            phase="Phase 10 & 11",
             target_module="src.exports",
             description=(
                 "Institutional-quality financial model exports to Excel and comprehensive "
@@ -295,7 +314,7 @@ def main() -> None:
             ],
             prerequisites=[
                 "Phase 6 DCF valuation engine",
-                "Phase 7 Scenario and sensitivity outputs",
+                "Phase 7 & 8 Scenario and sensitivity outputs",
             ],
         )
 

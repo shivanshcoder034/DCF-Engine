@@ -1,5 +1,45 @@
-"""Data ingestion, normalization, and local data persistence foundation.
+"""Data management package for companies, valuation projects, and financial records.
 
-This module will manage company profiles, historical financial statements,
-and database connections in subsequent development phases.
+Provides SQLAlchemy persistence, schemas, validation, repositories, services,
+and multi-format file importers.
 """
+
+from src.data.models import Base, Company, FinancialDataPoint, ImportBatch, ValuationProject
+from src.data.database import engine, get_db_session, init_db
+from src.data.schemas import (
+    DataClassification,
+    FinancialUnit,
+    LineItemDefinition,
+    PeriodType,
+    ProjectStatus,
+    SourceType,
+    StatementType,
+    STANDARD_LINE_ITEMS,
+    get_standard_items_by_statement,
+)
+from src.data.services import CompanyService, FinancialDataService, ProjectService
+from src.data.validators import validate_financial_record
+
+__all__ = [
+    "Base",
+    "Company",
+    "ValuationProject",
+    "ImportBatch",
+    "FinancialDataPoint",
+    "engine",
+    "init_db",
+    "get_db_session",
+    "StatementType",
+    "PeriodType",
+    "DataClassification",
+    "SourceType",
+    "FinancialUnit",
+    "ProjectStatus",
+    "LineItemDefinition",
+    "STANDARD_LINE_ITEMS",
+    "get_standard_items_by_statement",
+    "CompanyService",
+    "ProjectService",
+    "FinancialDataService",
+    "validate_financial_record",
+]

@@ -1,94 +1,124 @@
 # Development Roadmap
 ## AI-Powered DCF Valuation and Sensitivity Engine
 
-This roadmap establishes the phased engineering progression for the platform. Development progresses sequentially to maintain strict architectural separation, verifiable math, and code quality.
+This roadmap establishes the 12-phase engineering progression for the platform. Development progresses sequentially to maintain strict architectural separation, verifiable math, and institutional software quality.
 
 ---
 
-### Phase 1: Project Foundation and Architecture *(Current - Completed)*
+### Phase 1: Project Foundation and Architecture *(Status: Complete)*
 - **Objective:** Establish a clean, extensible, maintainable Python project foundation.
-- **Deliverables:**
-  - Repository structure with decoupled `app/` (presentation) and `src/` (engine) layers.
-  - Centralized application configuration (`app/config.py`) using `pathlib`.
-  - Minimal Streamlit application shell (`app/main.py`) with 9 planned navigation sections and phase placeholders.
-  - Dependency definition (`requirements.txt`) and Git exclusion rules (`.gitignore`).
-  - Environment configuration blueprint (`.env.example`).
-  - Architecture specifications (`docs/architecture.md`) and development roadmap (`docs/development-roadmap.md`).
+- **Key Deliverables:**
+  - Decoupled `app/` (presentation) and `src/` (engine) repository structure.
+  - Centralized application configuration (`app/config.py`) using `pathlib.Path`.
+  - Streamlit application shell (`app/main.py`) with 9 planned top-level navigation sections.
+  - Environment templates (`.env.example`), `.gitignore`, and pinned `requirements.txt`.
+  - Initial system architecture specification (`docs/architecture.md`).
 
 ---
 
-### Phase 2: Company Profiles & Financial Data Management
-- **Objective:** Ingest, standardize, and persist historical financial statements.
-- **Key Capabilities:**
-  - Company metadata schema (ticker, company name, sector, currency, fiscal year end).
-  - Income Statement, Balance Sheet, and Cash Flow Statement data models.
-  - Local database persistence via SQLite and SQLAlchemy ORM.
-  - Data validation rules and accounting balance verification (e.g. Assets = Liabilities + Equity).
+### Phase 2: Company Profiles & Financial Data Management *(Status: Complete)*
+- **Objective:** Establish persistent company profiles, valuation project workspaces, and multi-period financial statement ingestion.
+- **Key Deliverables:**
+  - SQLite persistence layer via SQLAlchemy ORM models (`Company`, `ValuationProject`, `FinancialDataPoint`, `ImportBatch`).
+  - Standardized schemas for Income Statements, Balance Sheets, and Cash Flow Statements.
+  - Granular data classifications (`reported_actual`, `normalized`, `adjustment`, `assumption`).
+  - Standard financial line-item catalog with support for custom items.
+  - Multi-field validation engine distinguishing blocking errors from review warnings.
+  - Complete multi-step CSV and Excel import workflow with column auto-mapping and duplicate conflict policies.
+  - Traceable source provenance tracking for every stored data point.
+  - Interactive company and project management interfaces with deletion safeguards.
 
 ---
 
-### Phase 3: Historical Financial Analysis
-- **Objective:** Compute foundational financial metrics and performance trends.
+### Phase 3: Historical Financial Analysis *(Status: Planned)*
+- **Objective:** Compute foundational financial performance metrics, margin trends, and capital efficiency indicators.
 - **Key Capabilities:**
-  - Multi-year revenue and operating income Compound Annual Growth Rates (CAGR).
-  - Profitability margin evolution (Gross, EBITDA, Operating, and Net Profit Margins).
-  - Working capital metrics (Days Sales Outstanding, Days Inventory Outstanding, Days Payable Outstanding).
-  - Return on Invested Capital (ROIC), Return on Capital Employed (ROCE), and Return on Equity (ROE).
+  - Multi-year Compound Annual Growth Rates (CAGR) for Revenue, Gross Profit, EBITDA, and EBIT.
+  - Margin evolution schedules (Gross Margin, EBITDA Margin, Operating Margin, Net Margin).
+  - Working capital cycle diagnostics (DSO, DIO, DPO, and Cash Conversion Cycle).
+  - Capital return metrics: Return on Invested Capital (ROIC), Return on Capital Employed (ROCE), and Return on Equity (ROE).
 
 ---
 
-### Phase 4: Projections & Free Cash Flow Forecasting Engine
-- **Objective:** Generate multi-year forward-looking financial schedules.
+### Phase 4: Financial Forecasting & Projections Engine *(Status: Planned)*
+- **Objective:** Generate multi-year forward-looking financial statement schedules and cash flow bridges.
 - **Key Capabilities:**
-  - Driver-based revenue forecasting (growth rate schedules, segment growth).
-  - Operating expense modeling and EBITDA/EBIT bridges.
+  - Driver-based revenue forecasting (segment growth, volume/price dynamics).
+  - Operating expense modeling and EBITDA-to-EBIT bridge calculations.
   - Depreciation & Amortization schedules and Capital Expenditures (CapEx).
-  - Net Working Capital (NWC) projections and annual ΔNWC impact.
-  - Formulaic derivation of Unlevered Free Cash Flow (UFCF = NOPAT + D&A - CapEx - ΔNWC).
+  - Working capital forecasting and balance sheet balance reconciliation.
+  - Formulaic derivation of Unlevered Free Cash Flows (NOPAT + D&A - CapEx - ΔNWC).
 
 ---
 
-### Phase 5: WACC & Discount Rate Engine
-- **Objective:** Compute the Weighted Average Cost of Capital (WACC).
+### Phase 5: WACC & Discount Rate Engine *(Status: Planned)*
+- **Objective:** Compute the Weighted Average Cost of Capital (WACC) reflecting enterprise risk.
 - **Key Capabilities:**
-  - Cost of Equity computation using the Capital Asset Pricing Model (CAPM).
-  - Beta estimation, unlevering and relevering procedures.
-  - Cost of Debt computation (pre-tax cost and effective tax shield).
+  - Cost of Equity estimation via the Capital Asset Pricing Model (CAPM).
+  - Beta estimation, raw vs. adjusted betas, and Hamada unlevering/relevering routines.
+  - Pre-tax and after-tax Cost of Debt schedules with effective marginal tax shield calculations.
   - Capital structure weightings based on market capitalization and net debt.
 
 ---
 
-### Phase 6: DCF Valuation & Terminal Value Engine
-- **Objective:** Execute core DCF discounting and determine intrinsic share value.
+### Phase 6: DCF Valuation & Terminal Value Engine *(Status: Planned)*
+- **Objective:** Discount projected free cash flows to determine enterprise value and intrinsic equity value.
 - **Key Capabilities:**
-  - Discounting explicit forecast Unlevered Free Cash Flows using calculated WACC.
+  - Present Value (PV) discounting of explicit forecast period Unlevered Free Cash Flows using calculated WACC.
   - Perpetual Growth Method (Gordon Growth Model) terminal value formulation.
   - Exit Multiple Method (EV/EBITDA multiple) terminal value formulation.
-  - Enterprise Value to Equity Value bridge (adding cash, deducting total debt, non-operating adjustments).
-  - Implied intrinsic value per share vs. current market quote comparison.
+  - Enterprise Value to Equity Value bridge (adding cash, deducting net debt, non-operating adjustments).
+  - Implied intrinsic value per share vs. current market pricing comparison.
 
 ---
 
-### Phase 7: Scenario & Sensitivity Analysis
-- **Objective:** Stress-test valuation outputs across variables and market environments.
+### Phase 7: Scenario Analysis *(Status: Planned)*
+- **Objective:** Stress-test valuation outputs across macroeconomic and operational environments.
 - **Key Capabilities:**
-  - Preset scenario modeling (Base Case, Bull Case, Bear Case) with custom parameter overrides.
-  - Two-dimensional sensitivity tables (e.g., WACC vs. Terminal Growth Rate, WACC vs. Exit Multiple).
+  - Preset scenario modelling: Base Case, Bull Case, Bear Case.
+  - Custom assumption parameter overrides (growth rate deltas, margin compression/expansion, WACC shifts).
+  - Cross-scenario comparative tables and valuation summaries.
+
+---
+
+### Phase 8: Sensitivity Analysis & Simulation *(Status: Planned)*
+- **Objective:** Evaluate valuation sensitivity to critical operational and discount rate drivers.
+- **Key Capabilities:**
+  - Two-dimensional sensitivity matrices (e.g. WACC vs. Terminal Growth Rate, WACC vs. Exit Multiple).
   - Valuation driver ranking and visual tornado analysis.
+  - Monte Carlo probabilistic valuation distributions.
 
 ---
 
-### Phase 8: Financial Reporting & Dynamic Excel Model Exports
-- **Objective:** Produce institutional deliverables and transparent spreadsheets.
+### Phase 9: Financial Dashboards & Interactive Visualizations *(Status: Planned)*
+- **Objective:** Deliver interactive, institutional-grade visual analytics.
 - **Key Capabilities:**
-  - Automated generation of multi-tab Excel models using `openpyxl` with dynamic spreadsheet formulas.
-  - Executive valuation report summary export.
-  - Audit logs documenting all valuation inputs and modeling assumptions.
+  - Interactive Plotly valuation bridge waterfalls and historical financial performance charts.
+  - Dynamic forecast scenario comparison visualizers.
+  - Custom financial KPI dashboard panels.
 
 ---
 
-### Phase 9: AI-Assisted Document & Financial Analysis *(Optional Extension)*
+### Phase 10: Dynamic Excel Financial Model Exports *(Status: Planned)*
+- **Objective:** Export auditable multi-tab spreadsheet models with dynamic formulas.
+- **Key Capabilities:**
+  - Multi-tab Excel workbook generation via `openpyxl`.
+  - Dynamic Excel spreadsheet formulas linking historical statements, forecasting schedules, WACC, and DCF tables.
+  - Professional institutional financial formatting and color-coded assumptions.
+
+---
+
+### Phase 11: Institutional Valuation Reports & Memos *(Status: Planned)*
+- **Objective:** Produce comprehensive downloadable valuation deliverables.
+- **Key Capabilities:**
+  - Automated executive valuation investment memo generation.
+  - Comprehensive audit trail of all model inputs, data sources, and analytical conclusions.
+  - Exportable report layouts in PDF and Markdown formats.
+
+---
+
+### Phase 12: AI-Assisted Document & Financial Statement Analysis *(Status: Planned)*
 - **Objective:** Provide automated synthesis of regulatory financial filings.
 - **Key Capabilities:**
-  - Automated extraction of financial footnotes and risk factors from 10-K / 10-Q reports.
+  - Automated extraction of financial footnotes and risk factors from 10-K and 10-Q reports.
   - Contextual AI summary cards highlighting key growth drivers and management commentary.
