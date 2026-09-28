@@ -6,6 +6,14 @@ working capital cycles, and cash flow indicators with interactive Plotly charts 
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -334,3 +342,8 @@ def render_historical_analysis_page() -> None:
         st.write(f"**Data Classification Analyzed:** `{bundle.data_classification}`")
         st.write(f"**Reporting Frequency:** `{bundle.period_type}`")
         st.write(f"**Chronological Periods Processed ({len(bundle.periods)}):** {', '.join(p.label for p in bundle.periods)}")
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Historical Analysis", render_historical_analysis_page)

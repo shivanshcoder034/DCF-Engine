@@ -6,6 +6,14 @@ period, and classification filtering, unit scaling, provenance inspection, and r
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import streamlit as st
 import pandas as pd
 
@@ -217,3 +225,8 @@ def render_financial_data_page() -> None:
                         st.markdown(f"**Source Notes:** {b.source_description}")
                     if b.notes:
                         st.markdown(f"**Audit Notes:** {b.notes}")
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Financial Data", render_financial_data_page)

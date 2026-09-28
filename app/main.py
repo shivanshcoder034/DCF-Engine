@@ -20,6 +20,7 @@ import streamlit as st
 from app.config import settings
 from app.components.badges import render_phase_badge
 from app.components.cards import render_placeholder_card
+from app.navigation import safe_render_page, setup_page_configuration
 from app.pages.companies import render_companies_page
 from app.pages.projects import render_projects_page
 from app.pages.financial_data import render_financial_data_page
@@ -34,16 +35,6 @@ from app.pages.sensitivity import render_sensitivity_page
 from app.pages.dashboard import render_dashboard_page
 from app.pages.reports import render_reports_page
 from app.pages.document_analysis import render_document_analysis_page
-
-
-def setup_page_configuration() -> None:
-    """Configure Streamlit page metadata, layout, and initial state."""
-    st.set_page_config(
-        page_title="AI-Powered DCF Engine",
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
 
 
 def render_sidebar() -> str:
@@ -71,15 +62,24 @@ def render_sidebar() -> str:
             "Reports & Exports",
         ]
 
+        # Synchronize programmatic navigation requests (e.g. from deep-link buttons)
+        if "app_nav_selection" in st.session_state:
+            target = st.session_state.pop("app_nav_selection")
+            if target in navigation_options:
+                st.session_state["main_nav_radio"] = target
+
+        if "main_nav_radio" not in st.session_state:
+            st.session_state["main_nav_radio"] = navigation_options[0]
+
         default_nav_idx = 0
-        if "app_nav_selection" in st.session_state and st.session_state["app_nav_selection"] in navigation_options:
-            default_nav_idx = navigation_options.index(st.session_state["app_nav_selection"])
-            del st.session_state["app_nav_selection"]
+        if st.session_state["main_nav_radio"] in navigation_options:
+            default_nav_idx = navigation_options.index(st.session_state["main_nav_radio"])
 
         selected_page = st.radio(
             label="Application Sections",
             options=navigation_options,
             index=default_nav_idx,
+            key="main_nav_radio",
             label_visibility="collapsed",
         )
 
@@ -181,56 +181,56 @@ def render_company_and_financial_data_section() -> None:
     st.markdown("---")
 
     if sub_section == "🏢 Companies":
-        render_companies_page()
+        safe_render_page("Company Profiles", render_companies_page)
     elif sub_section == "📁 Valuation Projects":
-        render_projects_page()
+        safe_render_page("Valuation Projects", render_projects_page)
     elif sub_section == "📊 Historical Financial Records":
-        render_financial_data_page()
+        safe_render_page("Historical Financial Records", render_financial_data_page)
     elif sub_section == "✍️ Manual Data Entry":
-        render_manual_entry_page()
+        safe_render_page("Manual Data Entry", render_manual_entry_page)
     elif sub_section == "📥 Import (CSV / Excel)":
-        render_import_data_page()
+        safe_render_page("Import Data", render_import_data_page)
     elif sub_section == "📑 SEC Filings & AI Analysis":
-        render_document_analysis_page()
+        safe_render_page("SEC Filings & AI Analysis", render_document_analysis_page)
 
 
 def main() -> None:
     """Main application dispatcher."""
-    setup_page_configuration()
+    setup_page_configuration("AI-Powered DCF Engine")
     selected_page = render_sidebar()
 
     if selected_page == "Home":
-        render_home_page()
+        safe_render_page("Home", render_home_page)
 
     elif selected_page == "Company & Financial Data":
-        render_company_and_financial_data_section()
+        safe_render_page("Company & Financial Data", render_company_and_financial_data_section)
 
     elif selected_page == "Document & Filing Analysis":
-        render_document_analysis_page()
+        safe_render_page("Document & Filing Analysis", render_document_analysis_page)
 
     elif selected_page == "Historical Analysis":
-        render_historical_analysis_page()
+        safe_render_page("Historical Analysis", render_historical_analysis_page)
 
     elif selected_page == "Forecasting":
-        render_forecasting_page()
+        safe_render_page("Forecasting", render_forecasting_page)
 
     elif selected_page == "WACC":
-        render_wacc_page()
+        safe_render_page("WACC", render_wacc_page)
 
     elif selected_page == "DCF Valuation":
-        render_dcf_page()
+        safe_render_page("DCF Valuation", render_dcf_page)
 
     elif selected_page == "Scenarios":
-        render_scenarios_page()
+        safe_render_page("Scenarios", render_scenarios_page)
 
     elif selected_page == "Sensitivity Analysis":
-        render_sensitivity_page()
+        safe_render_page("Sensitivity Analysis", render_sensitivity_page)
 
     elif selected_page == "Financial Dashboards":
-        render_dashboard_page()
+        safe_render_page("Financial Dashboards", render_dashboard_page)
 
     elif selected_page == "Reports & Exports":
-        render_reports_page()
+        safe_render_page("Reports & Exports", render_reports_page)
 
 
 if __name__ == "__main__":

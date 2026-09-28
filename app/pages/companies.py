@@ -5,6 +5,14 @@ Allows creating, viewing, searching, editing, and safely deleting target compani
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import streamlit as st
 
 from src.data.services import CompanyService, ProjectService
@@ -160,3 +168,8 @@ def render_companies_page() -> None:
                         st.error(str(val_err))
                     except Exception as exc:
                         st.error(f"Failed to create company: {exc}")
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Companies", render_companies_page)

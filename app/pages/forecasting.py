@@ -6,6 +6,14 @@ drivers, and capital expenditures to project multi-year financial statements and
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -483,3 +491,8 @@ def render_forecasting_page() -> None:
             "historical actuals. They are not investment recommendations or guarantees of future performance. "
             "Discounting, WACC estimation, and DCF equity valuation are performed in subsequent phases."
         )
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Forecasting", render_forecasting_page)

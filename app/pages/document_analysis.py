@@ -7,6 +7,14 @@ and auditable approval into historical project records.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -527,3 +535,8 @@ def render_document_analysis_page() -> None:
                     "Cached Locally": "Yes" if f.local_cache_path else "No",
                 })
             st.dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Document Analysis", render_document_analysis_page)

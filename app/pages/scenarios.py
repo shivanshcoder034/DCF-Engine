@@ -7,6 +7,14 @@ comparative valuation tables, Plotly visualizations, and persistence.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import json
 from typing import Dict, List, Optional
 
@@ -721,3 +729,8 @@ def render_scenarios_page() -> None:
 
     st.markdown("---")
     st.caption(f"🔒 {scenario_result.disclaimer}")
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Scenarios", render_scenarios_page)

@@ -6,6 +6,14 @@ multi-format institutional exports (PDF, Excel, CSV), and saved report managemen
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from datetime import date
 import io
 import re
@@ -762,3 +770,8 @@ def render_reports_page() -> None:
                             ReportService.delete_report(rep.id)
                             st.success(f"Deleted report configuration '{rep.name}'.")
                             st.rerun()
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Reports", render_reports_page)

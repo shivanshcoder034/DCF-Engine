@@ -6,6 +6,14 @@ and reproducible Monte Carlo probabilistic valuation distributions.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import json
 from typing import Dict, List, Optional
 
@@ -722,3 +730,8 @@ def render_sensitivity_page() -> None:
                         st.error("Failed to delete configuration.")
 
         st.info("ℹ️ **Persistence Note:** Saves input ranges, distribution definitions, iterations count, and random seed. Raw sample iterations are recomputed deterministically on-demand to optimize storage.")
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Sensitivity", render_sensitivity_page)

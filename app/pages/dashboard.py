@@ -6,6 +6,14 @@ forecast trajectories, DCF valuation bridge waterfalls, and scenario/sensitivity
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import streamlit as st
 import pandas as pd
 from typing import Optional
@@ -690,3 +698,8 @@ def render_dashboard_page() -> None:
                 if st.button("⚙️ Configure Sensitivity & Simulation Parameters", key="btn_cfg_sens"):
                     st.session_state["app_nav_selection"] = "Sensitivity Analysis"
                     st.rerun()
+
+
+if __name__ == "__main__":
+    from app.navigation import run_standalone_page
+    run_standalone_page("Dashboard", render_dashboard_page)
