@@ -7,6 +7,14 @@ for all valuation phases.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path so app and src packages resolve reliably
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import streamlit as st
 
 from app.config import settings
@@ -289,4 +297,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import streamlit.runtime
+    if not streamlit.runtime.exists():
+        from streamlit.web import cli as stcli
+        sys.argv = ["streamlit", "run", str(Path(__file__).resolve()), *sys.argv[1:]]
+        sys.exit(stcli.main())
+    else:
+        main()
