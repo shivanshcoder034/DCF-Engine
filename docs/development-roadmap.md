@@ -94,16 +94,30 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 7: Scenario Analysis *(Status: Planned)*
-- **Objective:** Stress-test valuation outputs across macroeconomic and operational environments.
-- **Key Capabilities:**
-  - Preset scenario modelling: Base Case, Bull Case, Bear Case.
-  - Custom assumption parameter overrides (growth rate deltas, margin compression/expansion, WACC shifts).
-  - Cross-scenario comparative tables and valuation summaries.
+### Phase 7: Scenario Analysis (Base / Bull / Bear) *(Status: Complete)*
+- **Objective:** Add scenario analysis capability that compares Base, Bull, and Bear valuation cases using existing forecast, WACC, and DCF engines.
+- **Key Deliverables:**
+  - Dedicated scenario orchestration package (`src/scenarios/`) decoupled from presentation code and database direct access.
+  - Three standardized scenario cases: **Base**, **Bull**, and **Bear**.
+  - Strict preservation of the Base case: uses selected saved forecast and WACC baseline without overrides.
+  - Explicit user-editable overrides in well-defined units:
+    - Revenue growth adjustment in percentage points (`pp`).
+    - Operating margin adjustment in percentage points (`pp`).
+    - Cost of capital (WACC) adjustment in basis points (`bps`, $100\text{ bps} = 1.0\%$).
+    - Perpetual growth rate adjustment in basis points (`bps`) for Gordon Growth.
+    - Exit multiple adjustment in multiple change (`x`) for Exit Multiple.
+  - Illustrative initial starting assumptions with interactive "Reset to Defaults" buttons.
+  - Deterministic recalculation of forecast cash flows and valuation outputs using existing Phase 4, 5, and 6 calculation engines.
+  - Withholding of affected valuation outputs with explicit diagnostic reasons when assumptions are invalid (e.g. $\text{WACC} \le g$) or inputs are missing.
+  - Cross-scenario comparison table displaying operational metrics, discount rates, cash flow present values, Enterprise Value, Equity Value, implied share price, and validation status.
+  - Interactive Plotly visualizations: grouped EV and Equity Value bar chart, implied share price comparison, projected UFCF cash flow trajectory lines, and EV composition stacked charts.
+  - Assumption auditability and delta bridge table tracing baseline value, applied override, resulting scenario assumption, and linked model provenance.
+  - Named scenario set persistence via `ScenarioModel` in SQLite (`database/dcf_engine.db`), supporting saving, updating, reloading, and deleting named analysis sets scoped to valuation projects.
+  - Streamlit user interface (`app/pages/scenarios.py`) integrated into centralized navigation.
 
 ---
 
-### Phase 8: Sensitivity Analysis & Simulation *(Status: Planned)*
+### Phase 8: Sensitivity Analysis & Simulation *(Status: Planned — Next Active Phase)*
 - **Objective:** Evaluate valuation sensitivity to critical operational and discount rate drivers.
 - **Key Capabilities:**
   - Two-dimensional sensitivity matrices (e.g. WACC vs. Terminal Growth Rate, WACC vs. Exit Multiple).

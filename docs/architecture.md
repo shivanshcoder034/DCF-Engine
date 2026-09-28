@@ -186,8 +186,49 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 ---
 
-### 11. Decoupling Rules for Phase 7 (Scenario Analysis) & Phase 8 (Sensitivity)
+### 11. Scenario Analysis Engine Architecture (`src/scenarios/`)
 
-1. **Scenario Analysis (Phase 7):** Will consume saved `ForecastModel`, `WaccModel`, and `DcfModel` configurations to run comparative cross-scenario tables (Base vs. Bull vs. Bear) without modifying underlying valuation calculations.
-2. **Sensitivity Analysis (Phase 8):** Will evaluate 2D matrices (e.g. WACC vs. Perpetual Growth Rate $g$, or WACC vs. Exit Multiple) using the pure calculation functions in `src/dcf/calculations.py`.
-3. **Historical Data Isolation:** Historical statements, analysis bundles, forecast projections, WACC hurdles, and DCF models remain modular, auditable, and decoupled.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `models.py` | Strongly typed dataclasses: `ScenarioOverrides` (growth delta pp, margin delta pp, WACC delta bps, terminal delta bps/x), `ScenarioAnalysisAssumptions` (container linking DCF, forecast, and WACC models with Bull/Bear overrides), `ScenarioCaseResult` (valuation outputs, effective metrics, diagnostics for an individual scenario case), and `ScenarioAnalysisResult` (consolidated 3-case bundle). |
+| `engine.py` | `ScenarioEngine`: Orchestrates deterministic recalculation of Base, Bull, and Bear cases. Applies percentage-point shifts to forecast revenue and operating margins, basis-point adjustments to WACC discount rates, and terminal parameter deltas. Reuses Phase 4 forecast, Phase 5 WACC, and Phase 6 DCF calculation engines. Enforces withholding of invalid scenarios (e.g. $\text{WACC} \le g$). |
+| `services.py` | `ScenarioService`: Coordinates saving, loading, listing, and deleting named `ScenarioModel` entities in the SQLite database. |
+| `formatting.py` | Formats cross-scenario comparison matrix tables, detailed assumption auditability DataFrames, and generates interactive Plotly charts (EV & Equity Value grouped bar chart, implied share price comparison, projected UFCF cash flow trajectory lines, and EV composition stacked bar chart). |
+
+---
+
+### 12. Scenario Override Formulas, Units & Validation Logic
+
+1. **Revenue Growth Adjustment ($\Delta g_{\text{rev}}$):**
+   $$g_{\text{rev}, t}^{\text{scenario}} = g_{\text{rev}, t}^{\text{base}} + \Delta g_{\text{rev}}$$
+   - Expressed in **percentage points** (`pp`) added directly to each forecast year's growth rate.
+   - Prevents silent distortion from relative percentage interpretations (e.g., $+2.0\text{ pp}$ on a $6.0\%$ rate yields $8.0\%$, not $6.12\%$).
+2. **Operating Margin Adjustment ($\Delta m$):**
+   $$\text{Gross Margin}_t^{\text{scenario}} = \text{Gross Margin}_t^{\text{base}} + \Delta m$$
+   $$\text{EBIT Margin}_t^{\text{scenario}} = \text{EBIT Margin}_t^{\text{base}} + \Delta m$$
+   - Expressed in **percentage points** (`pp`) applied to operating profitability across all forecast periods.
+3. **Cost of Capital / WACC Adjustment ($\Delta\text{WACC}_{\text{bps}}$):**
+   $$\text{WACC}^{\text{scenario}} = \text{WACC}^{\text{base}} + \left(\frac{\Delta\text{WACC}_{\text{bps}}}{100.0}\right)$$
+   - Expressed in **basis points** (`bps`), where $100\text{ bps} = 1.00\text{ percentage point} = 1.0\%$.
+   - Validates that effective $\text{WACC} > 0\%$.
+4. **Terminal Value Parameter Adjustments:**
+   - *Gordon Growth Perpetuity Model:*
+     $$g^{\text{scenario}} = g^{\text{base}} + \left(\frac{\Delta g_{\text{bps}}}{100.0}\right)$$
+     - Expressed in **basis points** (`bps`).
+     - **Mathematical Validity Condition:** If $\text{WACC}^{\text{scenario}} \le g^{\text{scenario}}$, the denominator $(\text{WACC} - g)$ is non-positive. In this case, terminal value and Enterprise Value are withheld and a diagnostic warning is prominently issued.
+   - *Exit Multiple Method:*
+     $$\text{Multiple}^{\text{scenario}} = \text{Multiple}^{\text{base}} + \Delta\text{Multiple}$$
+     - Expressed as a multiple delta (`x EBITDA`).
+5. **Base Case Isolation & Persistence Integrity:**
+   - The Base case strictly uses the selected saved forecast and WACC baseline without overrides ($\Delta = 0$).
+   - Editing Bull or Bear overrides never mutates or overwrites the saved `ForecastModel`, `WaccModel`, or `DcfModel` records in the database.
+   - Scenario sets are persisted under a distinct `ScenarioModel` entity in SQLite (`scenario_models` table).
+
+---
+
+### 13. Decoupling Rules for Phase 8 (Sensitivity Analysis & Simulation)
+
+1. **Sensitivity Analysis (Phase 8):** Will evaluate multi-dimensional 2D matrices (e.g. WACC vs. Perpetual Growth Rate $g$, or WACC vs. Exit Multiple) using the pure calculation functions in `src/dcf/calculations.py`.
+2. **Monte Carlo Simulation (Phase 8):** Will sample operational and market distributions to generate empirical valuation percentiles while reusing the decoupled forecasting and DCF layers.
+3. **Decoupled Architecture:** Presentation code in `app/` consumes only typed public models and service interfaces from `src/scenarios/`, `src/dcf/`, `src/wacc/`, `src/forecasting/`, and `src/analysis/`.
+

@@ -29,6 +29,7 @@ from app.pages.historical_analysis import render_historical_analysis_page
 from app.pages.forecasting import render_forecasting_page
 from app.pages.wacc import render_wacc_page
 from app.pages.dcf import render_dcf_page
+from app.pages.scenarios import render_scenarios_page
 
 
 def setup_page_configuration() -> None:
@@ -47,7 +48,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 6 Active", status="DCF Engine Ready")
+        render_phase_badge(phase_text="Phase 7 Active", status="Scenario Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -64,10 +65,15 @@ def render_sidebar() -> str:
             "Reports & Exports",
         ]
 
+        default_nav_idx = 0
+        if "app_nav_selection" in st.session_state and st.session_state["app_nav_selection"] in navigation_options:
+            default_nav_idx = navigation_options.index(st.session_state["app_nav_selection"])
+            del st.session_state["app_nav_selection"]
+
         selected_page = st.radio(
             label="Application Sections",
             options=navigation_options,
-            index=0,
+            index=default_nav_idx,
             label_visibility="collapsed",
         )
 
@@ -79,8 +85,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 6 • AI-Powered DCF Valuation Engine. "
-            "Scenario analysis scheduled in Phase 7."
+            "© Phase 7 • AI-Powered DCF Valuation Engine. "
+            "Sensitivity analysis scheduled in Phase 8."
         )
 
     return selected_page
@@ -96,22 +102,21 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 6 Active")
+    st.subheader("📌 Project Status: Phase 7 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: DCF Valuation Engine Active**\n\n"
-            "Phase 6 delivers transparent, deterministic Discounted Cash Flow (DCF) enterprise valuations. "
-            "Projected Unlevered Free Cash Flows (UFCF) from Phase 4 are discounted at the Phase 5 WACC hurdle rate "
-            "using user-configurable timing conventions (End-of-Year or Mid-Year). Terminal values are evaluated "
-            "via Gordon Growth Perpetuity or Exit Multiple EV/EBITDA models, and bridged to Implied Common Equity Value "
-            "and Intrinsic Value Per Share."
+            "**Current Status: Scenario Analysis (Base / Bull / Bear) Active**\n\n"
+            "Phase 7 introduces comparative multi-case scenario valuation. Users can model Base, Bull, and Bear cases "
+            "by configuring explicit overrides for revenue growth (+/- pp), operating margin (+/- pp), WACC (+/- bps), "
+            "and terminal parameters (perpetual growth +/- bps or exit multiple +/- x). All calculations reuse the deterministic "
+            "Phase 4 forecast, Phase 5 WACC, and Phase 6 DCF engines with full auditability."
         )
-        st.warning(
-            "**Notice:** Multi-scenario comparisons and 2D sensitivity matrices are scheduled for Phases 7-8. "
-            "DCF intrinsic valuations represent mathematical calculations based on user-supplied assumptions and not certified investment advice."
+        st.info(
+            "**Notice:** Multi-dimensional 2D sensitivity matrices and Monte Carlo simulations are scheduled for Phase 8. "
+            "Scenario valuations represent mathematical calculations based on user-supplied assumptions and not certified investment advice."
         )
 
     with status_col2:
@@ -129,9 +134,9 @@ def render_home_page() -> None:
         {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
         {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
         {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
-        {"Phase": "Phase 6 (Current)", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
-        {"Phase": "Phase 7", "Title": "Scenario Analysis", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Planned"},
-        {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
+        {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
+        {"Phase": "Phase 7 (Current)", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
+        {"Phase": "Phase 8 (Next)", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
         {"Phase": "Phase 9", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
         {"Phase": "Phase 10", "Title": "Dynamic Excel Model Exports", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
         {"Phase": "Phase 11", "Title": "Valuation Reports & Memos", "Focus": "Institutional PDF/Markdown summary memos and audit trails", "Status": "Planned"},
@@ -202,24 +207,7 @@ def main() -> None:
         render_dcf_page()
 
     elif selected_page == "Scenarios":
-        render_placeholder_card(
-            title="🔀 Scenario Modelling",
-            phase="Phase 7",
-            target_module="src.scenarios",
-            description=(
-                "Multi-scenario framework allowing users to define, compare, and stress-test "
-                "different operational and economic environments."
-            ),
-            planned_capabilities=[
-                "Preset scenario profiles: Base Case, Bull Case, Bear Case.",
-                "Custom scenario parameter overrides (revenue growth delta, margin expansion/contraction, WACC shifts).",
-                "Comparative visualization of key financial metrics across scenarios.",
-            ],
-            prerequisites=[
-                "Phase 4 Financial forecasting engine (Ready)",
-                "Phase 6 DCF valuation module",
-            ],
-        )
+        render_scenarios_page()
 
     elif selected_page == "Sensitivity Analysis":
         render_placeholder_card(
