@@ -507,15 +507,18 @@ def render_reports_page() -> None:
             st.markdown("### 6. Scenario Analysis (Base / Bull / Bear)")
             sc = report_bundle.scenario_result
             b, u, d = sc.base_case, sc.bull_case, sc.bear_case
+            u_pct = ((u.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (u.implied_value_per_share and b.implied_value_per_share) else None
+            d_pct = ((d.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (d.implied_value_per_share and b.implied_value_per_share) else None
+
             sc_table = [
-                {"Driver / Metric": "Revenue Growth Override", "Base Case": f"{b.revenue_growth_override_pp:+.1f} pp", "Bull Case": f"{u.revenue_growth_override_pp:+.1f} pp", "Bear Case": f"{d.revenue_growth_override_pp:+.1f} pp"},
-                {"Driver / Metric": "Operating Margin Override", "Base Case": f"{b.margin_override_pp:+.1f} pp", "Bull Case": f"{u.margin_override_pp:+.1f} pp", "Bear Case": f"{d.margin_override_pp:+.1f} pp"},
-                {"Driver / Metric": "WACC Adjustment", "Base Case": f"{b.wacc_adjustment_bps:+d} bps", "Bull Case": f"{u.wacc_adjustment_bps:+d} bps", "Bear Case": f"{d.wacc_adjustment_bps:+d} bps"},
+                {"Driver / Metric": "Revenue Growth Override", "Base Case": f"{b.overrides.revenue_growth_delta_pp:+.1f} pp", "Bull Case": f"{u.overrides.revenue_growth_delta_pp:+.1f} pp", "Bear Case": f"{d.overrides.revenue_growth_delta_pp:+.1f} pp"},
+                {"Driver / Metric": "Operating Margin Override", "Base Case": f"{b.overrides.margin_delta_pp:+.1f} pp", "Bull Case": f"{u.overrides.margin_delta_pp:+.1f} pp", "Bear Case": f"{d.overrides.margin_delta_pp:+.1f} pp"},
+                {"Driver / Metric": "WACC Adjustment", "Base Case": f"{b.overrides.wacc_delta_bps:+.0f} bps", "Bull Case": f"{u.overrides.wacc_delta_bps:+.0f} bps", "Bear Case": f"{d.overrides.wacc_delta_bps:+.0f} bps"},
                 {"Driver / Metric": "Effective WACC", "Base Case": f"{b.effective_wacc:.2f}%", "Bull Case": f"{u.effective_wacc:.2f}%", "Bear Case": f"{d.effective_wacc:.2f}%"},
                 {"Driver / Metric": "Enterprise Value ($M)", "Base Case": f"${b.enterprise_value:,.1f}" if b.enterprise_value else "N/A", "Bull Case": f"${u.enterprise_value:,.1f}" if u.enterprise_value else "N/A", "Bear Case": f"${d.enterprise_value:,.1f}" if d.enterprise_value else "N/A"},
                 {"Driver / Metric": "Equity Value ($M)", "Base Case": f"${b.equity_value:,.1f}" if b.equity_value else "N/A", "Bull Case": f"${u.equity_value:,.1f}" if u.equity_value else "N/A", "Bear Case": f"${d.equity_value:,.1f}" if d.equity_value else "N/A"},
-                {"Driver / Metric": "Implied Share Price", "Base Case": f"${b.implied_share_price:,.2f}" if b.implied_share_price else "N/A", "Bull Case": f"${u.implied_share_price:,.2f}" if u.implied_share_price else "N/A", "Bear Case": f"${d.implied_share_price:,.2f}" if d.implied_share_price else "N/A"},
-                {"Driver / Metric": "Upside / Downside vs. Base", "Base Case": "0.0%", "Bull Case": f"{u.upside_downside_pct:+.1f}%" if u.upside_downside_pct else "N/A", "Bear Case": f"{d.upside_downside_pct:+.1f}%" if d.upside_downside_pct else "N/A"},
+                {"Driver / Metric": "Implied Share Price", "Base Case": f"${b.implied_value_per_share:,.2f}" if b.implied_value_per_share else "N/A", "Bull Case": f"${u.implied_value_per_share:,.2f}" if u.implied_value_per_share else "N/A", "Bear Case": f"${d.implied_value_per_share:,.2f}" if d.implied_value_per_share else "N/A"},
+                {"Driver / Metric": "Upside / Downside vs. Base", "Base Case": "0.0%", "Bull Case": f"{u_pct:+.1f}%" if u_pct is not None else "N/A", "Bear Case": f"{d_pct:+.1f}%" if d_pct is not None else "N/A"},
             ]
             st.dataframe(pd.DataFrame(sc_table), use_container_width=True, hide_index=True)
             st.markdown("---")

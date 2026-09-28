@@ -19,8 +19,8 @@ from src.forecasting.engine import FinancialForecastingEngine
 from src.forecasting.models import ForecastAssumptions
 from src.forecasting.services import ForecastService
 from src.reporting.models import ReportBundle, ReportConfig
-from src.scenarios.engine import ScenarioAnalysisEngine
-from src.scenarios.models import ScenarioAssumptionsSet
+from src.scenarios.engine import ScenarioEngine
+from src.scenarios.models import ScenarioAnalysisAssumptions
 from src.scenarios.services import ScenarioService
 from src.sensitivity.engine import SensitivityEngine
 from src.sensitivity.models import SensitivityConfig
@@ -174,7 +174,7 @@ class ReportEngine:
             else:
                 try:
                     bundle.scenario_model_name = sc_model.name
-                    sc_assumptions = ScenarioAssumptionsSet.from_json(sc_model.assumptions_json)
+                    sc_assumptions = ScenarioAnalysisAssumptions.from_json(sc_model.assumptions_json)
 
                     # Resolve baseline models
                     base_dcf = bundle.dcf_assumptions
@@ -188,12 +188,16 @@ class ReportEngine:
                         base_wacc = WaccAssumptions.from_json(sc_model.wacc_model.assumptions_json)
 
                     if base_dcf and base_fc and base_wacc and bundle.historical_bundle:
-                        sc_res = ScenarioAnalysisEngine.evaluate_scenarios(
-                            dcf_assumptions=base_dcf,
-                            base_fc_assumptions=base_fc,
-                            base_wacc_assumptions=base_wacc,
+                        sc_res = ScenarioEngine.run_scenario_analysis(
+                            assumptions=sc_assumptions,
                             bundle=bundle.historical_bundle,
-                            scenario_set=sc_assumptions,
+                            base_forecast_assumptions=base_fc,
+                            base_wacc_assumptions=base_wacc,
+                            base_dcf_assumptions=base_dcf,
+                            fc_model_name=sc_model.forecast_model.name if sc_model.forecast_model else "Base Forecast",
+                            wacc_model_name=sc_model.wacc_model.name if sc_model.wacc_model else "Base WACC",
+                            dcf_model_name=sc_model.dcf_model.name if sc_model.dcf_model else "Base DCF",
+                            currency=config.metadata.reporting_currency,
                         )
                         bundle.scenario_result = sc_res
                     else:

@@ -567,15 +567,18 @@ class ExcelReportGenerator:
         u_case = sc.bull_case
         d_case = sc.bear_case
 
+        u_pct = ((u_case.implied_value_per_share - b_case.implied_value_per_share) / b_case.implied_value_per_share * 100.0) if (u_case.implied_value_per_share and b_case.implied_value_per_share) else None
+        d_pct = ((d_case.implied_value_per_share - b_case.implied_value_per_share) / b_case.implied_value_per_share * 100.0) if (d_case.implied_value_per_share and b_case.implied_value_per_share) else None
+
         s_rows = [
-            ("Revenue Growth Override (pp)", b_case.revenue_growth_override_pp, u_case.revenue_growth_override_pp, d_case.revenue_growth_override_pp, "0.0\" pp\""),
-            ("Operating Margin Override (pp)", b_case.margin_override_pp, u_case.margin_override_pp, d_case.margin_override_pp, "0.0\" pp\""),
-            ("WACC Adjustment (bps)", b_case.wacc_adjustment_bps, u_case.wacc_adjustment_bps, d_case.wacc_adjustment_bps, "0\" bps\""),
+            ("Revenue Growth Override (pp)", b_case.overrides.revenue_growth_delta_pp, u_case.overrides.revenue_growth_delta_pp, d_case.overrides.revenue_growth_delta_pp, "0.0\" pp\""),
+            ("Operating Margin Override (pp)", b_case.overrides.margin_delta_pp, u_case.overrides.margin_delta_pp, d_case.overrides.margin_delta_pp, "0.0\" pp\""),
+            ("WACC Adjustment (bps)", b_case.overrides.wacc_delta_bps, u_case.overrides.wacc_delta_bps, d_case.overrides.wacc_delta_bps, "0\" bps\""),
             ("Effective Discount Rate (WACC)", b_case.effective_wacc, u_case.effective_wacc, d_case.effective_wacc, "0.00%"),
             ("Enterprise Value (EV)", b_case.enterprise_value, u_case.enterprise_value, d_case.enterprise_value, "$#,##0.0"),
             ("Equity Value", b_case.equity_value, u_case.equity_value, d_case.equity_value, "$#,##0.0"),
-            ("Implied Share Price", b_case.implied_share_price, u_case.implied_share_price, d_case.implied_share_price, "$#,##0.00"),
-            ("Upside / Downside vs. Base (%)", 0.0, u_case.upside_downside_pct, d_case.upside_downside_pct, "0.0%"),
+            ("Implied Share Price", b_case.implied_value_per_share, u_case.implied_value_per_share, d_case.implied_value_per_share, "$#,##0.00"),
+            ("Upside / Downside vs. Base (%)", 0.0, u_pct, d_pct, "0.0%"),
             ("Validation Status", b_case.status, u_case.status, d_case.status, "@"),
         ]
 

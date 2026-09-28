@@ -579,15 +579,18 @@ class PdfReportGenerator:
             c.draw_text(header, x, c.y - 13.0, font="F2", size=8.0, r=1.0, g=1.0, b=1.0)
         c.y -= 18.0
 
+        u_pct = ((u.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (u.implied_value_per_share and b.implied_value_per_share) else None
+        d_pct = ((d.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (d.implied_value_per_share and b.implied_value_per_share) else None
+
         sc_rows = [
-            ("Revenue Growth Override", f"{b.revenue_growth_override_pp:+.1f} pp", f"{u.revenue_growth_override_pp:+.1f} pp", f"{d.revenue_growth_override_pp:+.1f} pp"),
-            ("Operating Margin Override", f"{b.margin_override_pp:+.1f} pp", f"{u.margin_override_pp:+.1f} pp", f"{d.margin_override_pp:+.1f} pp"),
-            ("WACC Adjustment", f"{b.wacc_adjustment_bps:+d} bps", f"{u.wacc_adjustment_bps:+d} bps", f"{d.wacc_adjustment_bps:+d} bps"),
+            ("Revenue Growth Override", f"{b.overrides.revenue_growth_delta_pp:+.1f} pp", f"{u.overrides.revenue_growth_delta_pp:+.1f} pp", f"{d.overrides.revenue_growth_delta_pp:+.1f} pp"),
+            ("Operating Margin Override", f"{b.overrides.margin_delta_pp:+.1f} pp", f"{u.overrides.margin_delta_pp:+.1f} pp", f"{d.overrides.margin_delta_pp:+.1f} pp"),
+            ("WACC Adjustment", f"{b.overrides.wacc_delta_bps:+.0f} bps", f"{u.overrides.wacc_delta_bps:+.0f} bps", f"{d.overrides.wacc_delta_bps:+.0f} bps"),
             ("Effective WACC", f"{b.effective_wacc:.2f}%", f"{u.effective_wacc:.2f}%", f"{d.effective_wacc:.2f}%"),
             ("Enterprise Value ($M)", f"${b.enterprise_value:,.1f}" if b.enterprise_value else "N/A", f"${u.enterprise_value:,.1f}" if u.enterprise_value else "N/A", f"${d.enterprise_value:,.1f}" if d.enterprise_value else "N/A"),
             ("Equity Value ($M)", f"${b.equity_value:,.1f}" if b.equity_value else "N/A", f"${u.equity_value:,.1f}" if u.equity_value else "N/A", f"${d.equity_value:,.1f}" if d.equity_value else "N/A"),
-            ("Implied Share Price", f"${b.implied_share_price:,.2f}" if b.implied_share_price else "N/A", f"${u.implied_share_price:,.2f}" if u.implied_share_price else "N/A", f"${d.implied_share_price:,.2f}" if d.implied_share_price else "N/A"),
-            ("Upside / Downside vs. Base", "0.0%", f"{u.upside_downside_pct:+.1f}%" if u.upside_downside_pct else "N/A", f"{d.upside_downside_pct:+.1f}%" if d.upside_downside_pct else "N/A"),
+            ("Implied Share Price", f"${b.implied_value_per_share:,.2f}" if b.implied_value_per_share else "N/A", f"${u.implied_value_per_share:,.2f}" if u.implied_value_per_share else "N/A", f"${d.implied_value_per_share:,.2f}" if d.implied_value_per_share else "N/A"),
+            ("Upside / Downside vs. Base", "0.0%", f"{u_pct:+.1f}%" if u_pct is not None else "N/A", f"{d_pct:+.1f}%" if d_pct is not None else "N/A"),
         ]
 
         for r_idx, (label, b_txt, u_txt, d_txt) in enumerate(sc_rows):

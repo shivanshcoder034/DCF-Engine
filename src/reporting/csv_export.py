@@ -206,14 +206,17 @@ class CsvReportGenerator:
         writer.writerow(["Driver / Valuation Metric", "Base Case", "Bull Case", "Bear Case"])
         b, u, d = sc.base_case, sc.bull_case, sc.bear_case
 
-        writer.writerow(["Revenue Growth Override (pp)", f"{b.revenue_growth_override_pp:+.2f}", f"{u.revenue_growth_override_pp:+.2f}", f"{d.revenue_growth_override_pp:+.2f}"])
-        writer.writerow(["Operating Margin Override (pp)", f"{b.margin_override_pp:+.2f}", f"{u.margin_override_pp:+.2f}", f"{d.margin_override_pp:+.2f}"])
-        writer.writerow(["WACC Adjustment (bps)", f"{b.wacc_adjustment_bps:+d}", f"{u.wacc_adjustment_bps:+d}", f"{d.wacc_adjustment_bps:+d}"])
+        u_pct = ((u.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (u.implied_value_per_share and b.implied_value_per_share) else None
+        d_pct = ((d.implied_value_per_share - b.implied_value_per_share) / b.implied_value_per_share * 100.0) if (d.implied_value_per_share and b.implied_value_per_share) else None
+
+        writer.writerow(["Revenue Growth Override (pp)", f"{b.overrides.revenue_growth_delta_pp:+.2f}", f"{u.overrides.revenue_growth_delta_pp:+.2f}", f"{d.overrides.revenue_growth_delta_pp:+.2f}"])
+        writer.writerow(["Operating Margin Override (pp)", f"{b.overrides.margin_delta_pp:+.2f}", f"{u.overrides.margin_delta_pp:+.2f}", f"{d.overrides.margin_delta_pp:+.2f}"])
+        writer.writerow(["WACC Adjustment (bps)", f"{b.overrides.wacc_delta_bps:+.0f}", f"{u.overrides.wacc_delta_bps:+.0f}", f"{d.overrides.wacc_delta_bps:+.0f}"])
         writer.writerow(["Effective WACC (%)", f"{b.effective_wacc:.2f}%", f"{u.effective_wacc:.2f}%", f"{d.effective_wacc:.2f}%"])
         writer.writerow(["Enterprise Value", f"{b.enterprise_value:.2f}" if b.enterprise_value else "N/A", f"{u.enterprise_value:.2f}" if u.enterprise_value else "N/A", f"{d.enterprise_value:.2f}" if d.enterprise_value else "N/A"])
         writer.writerow(["Equity Value", f"{b.equity_value:.2f}" if b.equity_value else "N/A", f"{u.equity_value:.2f}" if u.equity_value else "N/A", f"{d.equity_value:.2f}" if d.equity_value else "N/A"])
-        writer.writerow(["Implied Share Price", f"{b.implied_share_price:.2f}" if b.implied_share_price else "N/A", f"{u.implied_share_price:.2f}" if u.implied_share_price else "N/A", f"{d.implied_share_price:.2f}" if d.implied_share_price else "N/A"])
-        writer.writerow(["Upside / Downside (%)", "0.0%", f"{u.upside_downside_pct:+.1f}%" if u.upside_downside_pct else "N/A", f"{d.upside_downside_pct:+.1f}%" if d.upside_downside_pct else "N/A"])
+        writer.writerow(["Implied Share Price", f"{b.implied_value_per_share:.2f}" if b.implied_value_per_share else "N/A", f"{u.implied_value_per_share:.2f}" if u.implied_value_per_share else "N/A", f"{d.implied_value_per_share:.2f}" if d.implied_value_per_share else "N/A"])
+        writer.writerow(["Upside / Downside (%)", "0.0%", f"{u_pct:+.1f}%" if u_pct is not None else "N/A", f"{d_pct:+.1f}%" if d_pct is not None else "N/A"])
         writer.writerow(["Status", b.status, u.status, d.status])
 
         return buf.getvalue()
