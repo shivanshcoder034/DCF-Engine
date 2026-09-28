@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 9: Reporting, Presentation & Export Engine**. The application features an institutional report generation and multi-format export engine, turning project models into printable PDF reports (standard PDF 1.4 with dynamic pagination, running headers/footers, and KPI cards), multi-tab Excel financial model workbooks (`.xlsx` via `openpyxl`), and modular CSV tables, with in-app live previews, model provenance tracking, and saved report configurations.
+> **Active Development Status:** The repository has completed **Phase 10: Financial Dashboards & Interactive Visualizations**. The application features an institutional, unified financial dashboard connecting historical financial performance, forward-looking forecast cash flows, an enterprise-to-equity valuation waterfall bridge, cash-flow discounting trajectories, terminal value contribution diagnostics, and linked scenario and sensitivity explorations with interactive Plotly visualizations.
 
 ---
 
@@ -51,7 +51,7 @@ Key capabilities delivered in Phases 1–9:
   - **Explicit Invalid-Draw Accounting:** Transparent counting and breakdown of invalid draws (e.g., $\text{WACC} \le g$) without contaminating valid sample statistics.
   - **Summary Percentile Statistics & Histograms:** Mean, median, standard deviation, and percentiles (Min, P10, P25, P75, P90, Max) with Plotly distribution histograms and reference lines.
   - **Named Persistence:** Save, reload, and delete named sensitivity configurations (`SensitivityModel`) in SQLite.
-- **Phase 9 (Reporting, Presentation & Export Engine — Current):**
+- **Phase 9 (Reporting, Presentation & Export Engine):**
   - **Customizable Valuation Reports:** Comprehensive report configuration specifying title, subtitle, company overrides, reporting currency, generation date, and narrative notes.
   - **Granular Section Inclusion:** 10 modular sections with independent toggle controls (Overview, Executive Summary, Historical Financials, Forecast Projections, WACC Analysis, DCF Valuation & Equity Bridge, Scenario Analysis, Sensitivity & Simulation, Disclosures & Caveats, and Appendix).
   - **In-App Live Preview:** Interactive preview replicating report hierarchy, headline KPI metric cards, formatted financial tables, and model provenance badges.
@@ -59,6 +59,14 @@ Key capabilities delivered in Phases 1–9:
   - **Multi-Sheet Excel Financial Model Workbook:** Generated via `openpyxl` with professional typography, dark navy headers, thin borders, custom number formatting (`$#,##0.0`, `0.0%`, `0.00x`), auto-adjusted column widths, and freeze panes across 8 dedicated sheets.
   - **Modular Tabular CSV Exports:** Dedicated CSV exporters for Valuation Summary, Forecast Schedule, Historical Financial Statements, 2D Sensitivity Matrix, and Scenario Comparisons.
   - **Named Report Persistence:** Save, reload, update, and delete named report configurations (`ReportModel`) in SQLite.
+- **Phase 10 (Financial Dashboards & Interactive Visualizations — Current):**
+  - **Connected Model Selection & Scope Area:** Select valuation projects, historical reporting scopes, saved forecasts, WACC estimations, DCF cases, scenario sets, and sensitivity models with explicit diagnostics for missing dependencies.
+  - **Compact Headline KPI Bar:** Real-time visibility into historical revenue, operating margin, ending forecast UFCF, discount rate (WACC), Enterprise Value, Equity Value, and implied value per share.
+  - **Historical Financial Trends:** Interactive Plotly charts for revenue and key line items, profitability margin evolution, cash flow vs. CapEx dynamics, and working capital cycles (DSO, DIO, DPO, CCC).
+  - **Forecast & Cash-Flow Trajectories:** Merged historical vs. projected revenue trajectories with boundary markers, margin driver horizons, and UFCF component breakdown schedules.
+  - **Valuation Waterfall Bridge:** Enterprise-to-Equity valuation bridge waterfall chart (`go.Waterfall`) transitioning from PV of cash flows and PV of terminal value to Enterprise Value, applying balance sheet bridge adjustments down to Equity Value.
+  - **Terminal Value Share & Cash Flow Discounting:** Donut chart of terminal value contribution with high-share diagnostic alerts (>75% of EV), and nominal vs present value cash-flow discounting trajectories.
+  - **Linked Scenario & Sensitivity Exploration:** Grouped Base/Bull/Bear valuation and share price comparisons, assumption override audit tables, 2D sensitivity matrix heatmaps with baseline indicators (`★`), and Monte Carlo distribution histograms with percentile reference lines.
 
 ---
 
@@ -94,6 +102,7 @@ dcf-valuation-engine/
 │   │   ├── dcf.py              # DCF valuation engine, cash flow discounting & equity bridge view
 │   │   ├── scenarios.py        # Scenario analysis view, Base/Bull/Bear overrides & comparison
 │   │   ├── sensitivity.py      # Sensitivity analysis view, 2D matrix heatmap & Monte Carlo simulation
+│   │   ├── dashboard.py        # Central financial dashboard & interactive Plotly visualizer view
 │   │   └── reports.py          # Reports & exports view, in-app preview & configuration management
 │   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
@@ -151,14 +160,17 @@ dcf-valuation-engine/
 │   │   ├── engine.py           # SensitivityEngine 2D matrix recalculation & Monte Carlo RNG loops
 │   │   ├── services.py         # SensitivityService for persisting named SensitivityModel records
 │   │   └── formatting.py       # 2D tabular matrices, Plotly heatmaps, Monte Carlo histograms & percentile stats
-│   └── reporting/              # Reporting, Presentation & Export Engine (Phase 9)
+│   ├── reporting/              # Reporting, Presentation & Export Engine (Phase 9)
+│   │   ├── __init__.py
+│   │   ├── models.py           # ReportSection, ReportMetadata, ReportConfig, ReportBundle
+│   │   ├── engine.py           # ReportEngine compiling underlying models without formula duplication
+│   │   ├── services.py         # ReportService for persisting named ReportModel configurations
+│   │   ├── pdf_export.py       # Pure-Python PDF 1.4 publication report generator
+│   │   ├── excel_export.py     # Multi-tab openpyxl Excel financial model generator
+│   │   └── csv_export.py       # Tabular CSV exporters for valuation, schedules, and matrices
+│   └── dashboard/              # Financial Dashboards & Interactive Visualizations (Phase 10)
 │       ├── __init__.py
-│       ├── models.py           # ReportSection, ReportMetadata, ReportConfig, ReportBundle
-│       ├── engine.py           # ReportEngine compiling underlying models without formula duplication
-│       ├── services.py         # ReportService for persisting named ReportModel configurations
-│       ├── pdf_export.py       # Pure-Python PDF 1.4 publication report generator
-│       ├── excel_export.py     # Multi-tab openpyxl Excel financial model generator
-│       └── csv_export.py       # Tabular CSV exporters for valuation, schedules, and matrices
+│       └── charts.py           # Presentation Plotly chart suite (waterfalls, trends, margins, distributions)
 │
 ├── database/                   # Designated directory for local SQLite database
 │   ├── .gitkeep
@@ -230,18 +242,17 @@ python -m streamlit run app/main.py
 | **Phase 7** | **Scenario Analysis (Base / Bull / Bear)** | Bull/Bear scenarios, parameter overrides, cross-scenario comparisons | **Complete** |
 | **Phase 8** | **Sensitivity Analysis & Simulation** | 2D sensitivity matrices, driver heatmaps, Monte Carlo | **Complete** |
 | **Phase 9** | **Reporting, Presentation & Export** | Multi-page PDF reports, openpyxl Excel models, CSVs | **Complete** |
-| **Phase 10** | Financial Dashboards & Visualizations | Interactive Plotly statement and valuation charts | *Planned (Next)* |
-| **Phase 11** | Dynamic Excel Formula Linking | openpyxl financial models with dynamic formulas | *Planned* |
+| **Phase 10** | **Financial Dashboards & Visualizations** | Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration | **Complete** |
+| **Phase 11** | Dynamic Excel Formula Linking | openpyxl financial models with dynamic formulas | *Planned (Next)* |
 | **Phase 12** | AI-Assisted Document Analysis | Automated 10-K extraction and footnote synthesis | *Planned* |
 
 ---
 
 ## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 9)
-- Interactive financial statement ratio dashboards and cross-project portfolio analytics belong to Phase 10.
+### Current Limitations (Phase 10)
 - Dynamic multi-tab openpyxl live spreadsheet formula linking and automated 10-K footnote parsing belong to Phases 11–12.
-- Valuation reports, sensitivity matrices, and simulated distributions describe analytical outputs under user-selected assumptions and historical statements; they do not constitute certified investment advice, recommendations, confidence intervals, or guaranteed future prices.
+- Valuation dashboards, sensitivity matrices, and simulated distributions describe analytical outputs under user-selected assumptions and historical statements; they do not constitute certified investment advice, recommendations, confidence intervals, or guaranteed future prices.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

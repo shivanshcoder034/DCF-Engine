@@ -152,16 +152,34 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 10: Financial Dashboards & Interactive Visualizations *(Status: Planned — Next Active Phase)*
-- **Objective:** Deliver interactive, institutional-grade visual analytics and valuation dashboards.
-- **Key Capabilities:**
-  - Interactive Plotly valuation bridge waterfalls and historical financial performance charts.
-  - Dynamic forecast scenario comparison visualizers and sensitivity contour plots.
-  - Custom financial KPI dashboard panels and valuation summary widgets.
+### Phase 10: Financial Dashboards & Interactive Visualizations *(Status: Complete)*
+- **Objective:** Deliver interactive, institutional-grade visual analytics and valuation dashboards connecting historical performance, forecast cash flows, DCF valuation bridge waterfalls, and scenario/sensitivity exploration.
+- **Key Deliverables:**
+  - Dedicated visual analytics package (`src/dashboard/`) decoupled from presentation logic and database direct access.
+  - High-performance, presentation-grade Plotly chart generation suite (`src/dashboard/charts.py`):
+    - Historical multi-line financial trend charts (Revenue, Gross Profit, EBITDA, Net Income) with metric multi-selection and period filtering.
+    - Historical profitability margin evolution (Gross, EBITDA, EBIT, Net Margin).
+    - Cash flow and CapEx dynamics comparing Operating Cash Flow (CFO), CapEx magnitude, CFO Less CapEx, and historical UFCF estimates.
+    - Working capital cycle efficiency charts tracking DSO, DIO, DPO, and Cash Conversion Cycle (CCC).
+    - Historical vs. projected revenue trajectories with visual boundary markers and dashed projection styles.
+    - Forward-looking driver margin horizons (Gross, EBITDA, EBIT) across historical baseline and forecast periods.
+    - Projected UFCF component breakdown schedules (NOPAT, D&A, -CapEx, -ΔNWC, = UFCF).
+    - Institutional DCF Enterprise-to-Equity valuation waterfall chart (`go.Waterfall`) bridging PV of Forecast UFCF, PV of Terminal Value, Enterprise Value, Cash & Equivalents (+), Interest-Bearing Debt (-), Minority Interest (-), Preferred Stock (-), and Other Non-Operating Adjustments (+/-) down to Implied Equity Value.
+    - Cash flow discounting trajectory comparing nominal UFCF vs. present value discounted at WACC.
+    - Terminal value contribution donut chart with automated diagnostic warnings when terminal value concentration exceeds 75% of Enterprise Value.
+    - Cross-scenario comparison grouped bar charts and per-share price benchmarks across Base, Bull, and Bear cases.
+    - 2D valuation sensitivity heatmaps with cell hover details, custom color scales, and distinct baseline marking (`★`).
+    - Monte Carlo probabilistic distribution histograms with vertical reference lines for Median, P10, and P90 percentiles.
+  - Centralized Streamlit dashboard page (`app/pages/dashboard.py`) integrated into primary navigation:
+    - Scope and model selection hub connecting valuation projects, historical frequency (Annual vs. Quarterly) and data classifications, saved forecasts, WACC estimations, DCF cases, scenario sets, and sensitivity configurations.
+    - Explicit diagnostic notices for missing, deleted, or incompatible models without silent substitution.
+    - 7-metric compact headline KPI row (Latest Revenue, Operating Margin, Forecast UFCF, WACC, Enterprise Value, Equity Value, and Value per Share).
+    - 4 connected exploration tabs: Historical Performance, Forecast & Cash Flows, DCF Valuation & Bridge, and Scenario & Sensitivity Exploration.
+    - Non-destructive navigation buttons linking directly to underlying model workbenches without duplicating assumption editors.
 
 ---
 
-### Phase 11: Dynamic Excel Financial Model Formula Linking *(Status: Planned)*
+### Phase 11: Dynamic Excel Financial Model Formula Linking *(Status: Planned — Next Active Phase)*
 - **Objective:** Export auditable multi-tab spreadsheet models with active dynamic formulas.
 - **Key Capabilities:**
   - Multi-tab Excel workbook generation via `openpyxl` with live formulas linking historicals, forecast, WACC, and DCF.

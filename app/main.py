@@ -31,6 +31,7 @@ from app.pages.wacc import render_wacc_page
 from app.pages.dcf import render_dcf_page
 from app.pages.scenarios import render_scenarios_page
 from app.pages.sensitivity import render_sensitivity_page
+from app.pages.dashboard import render_dashboard_page
 from app.pages.reports import render_reports_page
 
 
@@ -50,7 +51,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 9 Active", status="Reporting Engine Ready")
+        render_phase_badge(phase_text="Phase 10 Active", status="Dashboard Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -64,6 +65,7 @@ def render_sidebar() -> str:
             "DCF Valuation",
             "Scenarios",
             "Sensitivity Analysis",
+            "Financial Dashboards",
             "Reports & Exports",
         ]
 
@@ -87,8 +89,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 9 • AI-Powered DCF Valuation Engine. "
-            "Reporting, presentation & export engine active."
+            "© Phase 10 • AI-Powered DCF Valuation Engine. "
+            "Financial dashboards & visual analytics active."
         )
 
     return selected_page
@@ -105,23 +107,22 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 9 Active")
+    st.subheader("📌 Project Status: Phase 10 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Reporting, Presentation & Export Engine Active**\n\n"
-            "Phase 9 delivers automated report compilation and multi-format export capabilities. "
-            "Analysts can configure customized valuation reports selecting underlying historical analyses, "
-            "forecasts, WACC estimations, DCF valuation cases, scenario comparisons, and sensitivity simulations. "
-            "Export formats include institutional multi-page PDF memorandums, structured multi-tab Excel financial "
-            "model workbooks (.xlsx), and modular CSV tables."
+            "**Current Status: Financial Dashboards & Interactive Visualizations Active**\n\n"
+            "Phase 10 delivers connected visual analytics and interactive exploration for valuation projects. "
+            "Analysts can explore historical performance trends, forward-looking forecast cash flows, "
+            "DCF Enterprise-to-Equity valuation waterfalls, cash flow discounting schedules, and linked "
+            "scenario and sensitivity simulations within an institutional dashboard environment."
         )
         st.info(
-            "**Notice:** Phase 10 will deliver advanced interactive financial dashboards and dynamic spreadsheet formula linking. "
-            "Valuation reports and exported models represent analytical evaluations based on user-supplied "
-            "assumptions and not certified investment advice."
+            "**Notice:** Phase 11 will deliver dynamic openpyxl spreadsheet financial model formula linking. "
+            "Dashboard metrics reflect deterministic model outputs based on user-supplied assumptions and do not "
+            "constitute investment advice or future return predictions."
         )
 
     with status_col2:
@@ -142,9 +143,9 @@ def render_home_page() -> None:
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
         {"Phase": "Phase 7", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
         {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver heatmaps, Monte Carlo", "Status": "Complete"},
-        {"Phase": "Phase 9 (Current)", "Title": "Reporting, Presentation & Export Engine", "Focus": "Multi-page PDF reports, openpyxl Excel models, CSVs, in-app preview", "Status": "Complete"},
-        {"Phase": "Phase 10 (Next)", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
-        {"Phase": "Phase 11", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
+        {"Phase": "Phase 9", "Title": "Reporting, Presentation & Export Engine", "Focus": "Multi-page PDF reports, openpyxl Excel models, CSVs, in-app preview", "Status": "Complete"},
+        {"Phase": "Phase 10 (Current)", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration", "Status": "Complete"},
+        {"Phase": "Phase 11 (Next)", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
         {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
     ]
 
@@ -216,6 +217,9 @@ def main() -> None:
 
     elif selected_page == "Sensitivity Analysis":
         render_sensitivity_page()
+
+    elif selected_page == "Financial Dashboards":
+        render_dashboard_page()
 
     elif selected_page == "Reports & Exports":
         render_reports_page()

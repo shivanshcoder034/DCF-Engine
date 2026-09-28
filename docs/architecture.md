@@ -304,10 +304,52 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 ---
 
-### 17. Decoupling Rules for Phase 10 (Financial Dashboards & Interactive Visualizations)
+### 17. Dashboard & Visual Analytics Architecture (`src/dashboard/`)
 
-1. **Dashboard Decoupling:** Phase 10 interactive dashboards will consume compiled analytical data structures from `ReportBundle` or domain result objects (`HistoricalAnalysisBundle`, `ForecastResult`, `WaccResult`, `DcfValuationResult`, `ScenarioAnalysisResult`, `SensitivityMatrixResult`, `MonteCarloSimulationResult`).
-2. **Formula Integrity:** Presentation and dashboard layers must not duplicate domain formulas, WACC weighting, or cash flow discounting algorithms.
-3. **Database Isolation:** All reports, scenarios, sensitivity models, and dashboards remain scoped to `ValuationProject` via foreign keys.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `src/dashboard/__init__.py` | Public interface exposing standard Plotly chart visualizers and analytical diagram generators. |
+| `src/dashboard/charts.py` | Dedicated Plotly chart generators: `create_historical_trend_chart`, `create_margin_evolution_chart`, `create_cash_flow_capex_chart`, `create_working_capital_cycle_chart`, `create_revenue_actual_vs_projected_chart`, `create_forecast_driver_margins_chart`, `create_ufcf_trajectory_breakdown_chart`, `create_valuation_waterfall_chart`, `create_terminal_value_share_donut_chart`, `create_cash_flow_discounting_comparison_chart`, `create_scenario_comparison_chart`, `create_sensitivity_contour_chart`, `create_monte_carlo_distribution_chart`. |
+| `app/pages/dashboard.py` | Centralized Streamlit dashboard view: project and model selector hub, headline KPI bar, and 4 connected exploration tabs (Historical Performance, Forecast & Cash Flows, DCF Valuation & Bridge, and Scenario & Sensitivity Exploration). |
+
+---
+
+### 18. Valuation Waterfall & Plotly Charting Standards
+
+1. **Enterprise-to-Equity Valuation Waterfall (`go.Waterfall`):**
+   - Implements strict accounting reconciliation bridging cash flow discounting to equity ownership:
+     - **Step 1: PV of Explicit Forecast Cash Flows:** Relative addition ($+$).
+     - **Step 2: PV of Terminal Value:** Relative addition ($+$).
+     - **Step 3: Enterprise Value (EV):** Subtotal measure (`total`), evaluating:
+       $$\text{Enterprise Value} = \text{PV of Explicit Forecast UFCF} + \text{PV of Terminal Value}$$
+     - **Step 4: Cash & Cash Equivalents:** Relative addition ($+$), reflecting liquid non-operating assets.
+     - **Step 5: Interest-Bearing Debt:** Relative deduction ($-$), reflecting senior claims.
+     - **Step 6: Minority Interest:** Relative deduction ($-$), reflecting non-controlling shareholder claims.
+     - **Step 7: Preferred Equity:** Relative deduction ($-$), reflecting senior preferred claims.
+     - **Step 8: Other Non-Operating Adjustments:** Signed adjustment ($+/-$), reflecting associates, joint ventures, or litigation liabilities.
+     - **Step 9: Implied Equity Value:** Subtotal measure (`total`), evaluating:
+       $$\text{Equity Value} = \text{EV} + \text{Cash} - \text{Debt} - \text{Minority Interest} - \text{Preferred Stock} + \text{Other Adjustments}$$
+   - **Color Standardization:** Additions are rendered in emerald green (`#10B981` / `#16A34A`), deductions in crimson red (`#DC2626`), and cumulative subtotals in institutional navy (`#1E3A8A`).
+
+2. **Visual Differentiation & Accessibility Standards:**
+   - Visual series never rely on color alone to convey meaning:
+     - Historical actuals are rendered with solid lines and circular/diamond markers.
+     - Forecast projections use dashed lines, distinct marker symbols (squares/triangles), and bar fill patterns (`/`).
+     - Clear vertical boundary lines and text annotations explicitly distinguish the transition from historical actuals to forward-looking projections.
+     - Baseline scenario and sensitivity matrix intersections are explicitly flagged with star indicators (`★`).
+   - Missing data points and period gaps are preserved with `connectgaps=False` rather than silently interpolated or replaced with synthetic zeros.
+
+3. **Terminal Value Share Diagnostic Rule:**
+   - When the present value of terminal value exceeds **75.0%** of Enterprise Value:
+     $$\text{TV Share} = \frac{\text{PV of Terminal Value}}{\text{Enterprise Value}} > 75.0\%$$
+   - The dashboard automatically renders an institutional diagnostic advisory warning analysts of high terminal value concentration and heightened sensitivity to perpetual growth or exit multiple assumptions.
+
+---
+
+### 19. Decoupling Rules for Phase 11 (Dynamic Excel Model Formula Linking)
+
+1. **Analytical Source of Truth:** Phase 11 dynamic Excel workbooks will consume domain models (`HistoricalAnalysisBundle`, `ForecastResult`, `WaccResult`, `DcfValuationResult`, `ScenarioAnalysisResult`, `SensitivityMatrixResult`) directly.
+2. **Formula Translation Layer:** In Phase 11, calculation formulas will be written as native Excel formulas (e.g. `=SUM(...)`, `=NPV(...)`, `=EBIT*(1-t)`) inside worksheet cells rather than hardcoded static numeric values, enabling live auditing and sensitivity recalculation inside Microsoft Excel.
+3. **Dashboard Separation:** The dashboard layer (`app/pages/dashboard.py` and `src/dashboard/charts.py`) remains strictly an interactive exploration interface and does not alter underlying saved scenario models or database state.
 
 
