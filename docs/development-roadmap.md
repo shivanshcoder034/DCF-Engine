@@ -136,30 +136,36 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 9: Financial Dashboards & Interactive Visualizations *(Status: Planned — Next Active Phase)*
-- **Objective:** Deliver interactive, institutional-grade visual analytics.
+### Phase 9: Reporting, Presentation & Export Engine *(Status: Complete)*
+- **Objective:** Build an institutional report-generation and multi-format export capability turning project analysis and valuation models into clear, reproducible deliverables.
+- **Key Deliverables:**
+  - Dedicated reporting package (`src/reporting/`) decoupled from presentation code and database direct access.
+  - Multi-section report configuration specifying title, subtitle, company overrides, reporting currency, generation date, and analyst attribution.
+  - Granular section inclusion controls across 10 modular sections: Overview, Executive Summary, Historical Analysis, Forecast Projections, WACC Analysis, DCF Valuation & Equity Bridge, Scenario Analysis, Sensitivity & Simulation, Disclosures & Caveats, and Appendix.
+  - Unified analytical report compiler (`ReportEngine`) resolving underlying historical bundles, forecasts, WACC estimations, DCF valuation cases, scenario sets, and sensitivity matrices without formula duplication.
+  - Explicit diagnostic handling for missing, deleted, or incompatible models, with outputs withheld rather than replaced with silent zeros.
+  - Pure-Python publication-grade PDF report generator (`PdfReportGenerator`) compliant with standard PDF 1.4, featuring running headers/footers with dynamic page numbering, KPI highlight cards, and structured tables.
+  - Institutional multi-sheet Excel workbook export engine (`ExcelReportGenerator`) via `openpyxl` with professional typography, header fills, number formats (`$#,##0.0`, `0.0%`, `0.00x`), thin borders, and auto-adjusted column widths.
+  - Tabular CSV export suite (`CsvReportGenerator`) covering valuation summaries, forecast schedules, historical statements, sensitivity matrices, and scenario sets.
+  - Named report configuration persistence via `ReportModel` in SQLite (`database/dcf_engine.db`), supporting save, update, reload, and delete operations.
+  - Streamlit user interface (`app/pages/reports.py`) with 4 dedicated tabs: Configuration, In-App Live Preview, Export Center, and Saved Configurations.
+
+---
+
+### Phase 10: Financial Dashboards & Interactive Visualizations *(Status: Planned — Next Active Phase)*
+- **Objective:** Deliver interactive, institutional-grade visual analytics and valuation dashboards.
 - **Key Capabilities:**
   - Interactive Plotly valuation bridge waterfalls and historical financial performance charts.
-  - Dynamic forecast scenario comparison visualizers.
-  - Custom financial KPI dashboard panels.
+  - Dynamic forecast scenario comparison visualizers and sensitivity contour plots.
+  - Custom financial KPI dashboard panels and valuation summary widgets.
 
 ---
 
-### Phase 10: Dynamic Excel Financial Model Exports *(Status: Planned)*
-- **Objective:** Export auditable multi-tab spreadsheet models with dynamic formulas.
+### Phase 11: Dynamic Excel Financial Model Formula Linking *(Status: Planned)*
+- **Objective:** Export auditable multi-tab spreadsheet models with active dynamic formulas.
 - **Key Capabilities:**
-  - Multi-tab Excel workbook generation via `openpyxl`.
-  - Dynamic Excel spreadsheet formulas linking historical statements, forecasting schedules, WACC, and DCF tables.
-  - Professional institutional financial formatting and color-coded assumptions.
-
----
-
-### Phase 11: Institutional Valuation Reports & Memos *(Status: Planned)*
-- **Objective:** Produce comprehensive downloadable valuation deliverables.
-- **Key Capabilities:**
-  - Automated executive valuation investment memo generation.
-  - Comprehensive audit trail of all model inputs, data sources, and analytical conclusions.
-  - Exportable report layouts in PDF and Markdown formats.
+  - Multi-tab Excel workbook generation via `openpyxl` with live formulas linking historicals, forecast, WACC, and DCF.
+  - Professional institutional financial formatting, color-coded assumption cells, and dynamic recalculation.
 
 ---
 

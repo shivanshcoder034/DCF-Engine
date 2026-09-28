@@ -274,10 +274,40 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 ---
 
-### 15. Decoupling Rules for Phase 9 (Financial Dashboards & Visualizations)
+### 15. Reporting, Presentation & Export Architecture (`src/reporting/`)
 
-1. **Dashboard Decoupling:** Phase 9 dashboards will consume typed result structures from historical analysis (`HistoricalAnalysisBundle`), forecasting (`ForecastResult`), WACC (`WaccResult`), DCF (`DcfValuationResult`), scenarios (`ScenarioAnalysisResult`), and sensitivity (`SensitivityMatrixResult`, `MonteCarloSimulationResult`).
-2. **Formula Integrity:** Presentation layers must not duplicate domain formulas or financial modeling mathematics.
-3. **Database Isolation:** All analytics, scenario models, and sensitivity configurations remain scoped to `ValuationProject` via foreign keys.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `models.py` | Strongly typed domain dataclasses: `ReportSection` (enum of 10 supported sections), `ReportSectionConfig` (granular inclusion toggles), `ReportMetadata` (title, subtitle, company name, ticker, reporting currency, fiscal year-end, report date, prepared by, narrative notes), `ReportModelReferences` (linked IDs and names for historical frequency/classification, forecast, WACC, DCF, scenario, and sensitivity models), `ReportConfig` (persisted container specification), and `ReportBundle` (compiled analytical container holding resolved models, calculations, and diagnostic logs). |
+| `engine.py` | `ReportEngine.compile_report_bundle`: Coordinates retrieval of saved models via project services, invokes domain calculation engines (`HistoricalAnalysisEngine`, `FinancialForecastingEngine`, `WaccEngine`, `DcfEngine`, `ScenarioAnalysisEngine`, `SensitivityEngine`) without formula reimplementation, isolates missing model errors, and compiles comprehensive warnings and data quality findings. |
+| `services.py` | `ReportService`: Handles CRUD persistence operations for `ReportModel` entities in SQLite (`database/dcf_engine.db`) scoped to `ValuationProject`. |
+| `pdf_export.py` | `PdfReportGenerator`: Pure-Python publication-grade PDF 1.4 document builder producing multi-page printable memorandums with running headers/footers, dynamic "Page X of Y" pagination, KPI highlight cards, and structured tables. Zero external C-library or system binary dependencies. |
+| `excel_export.py` | `ExcelReportGenerator`: Multi-sheet institutional financial model workbook generator using `openpyxl`, with professional styling, dark navy headers, thin borders, custom number formatting (`$#,##0.0`, `0.0%`, `0.00x`), auto-adjusted column widths, and freeze panes across 8 dedicated sheets. |
+| `csv_export.py` | `CsvReportGenerator`: Standardized, unambiguous CSV exporters for Valuation Summary, Forecast Projections Schedule, Historical Financial Statements, 2D Sensitivity Matrix, and Base/Bull/Bear Scenario Comparisons. |
+
+---
+
+### 16. Multi-Format Export Capabilities & Content Integrity
+
+1. **Analytical Source of Truth:**
+   - The reporting engine never recalculates or approximates financial metrics independently. All calculations are executed directly by underlying engines (`HistoricalAnalysisEngine`, `FinancialForecastingEngine`, `WaccEngine`, `DcfEngine`, `ScenarioAnalysisEngine`, `SensitivityEngine`).
+2. **Missing Model & Invalid Output Handling:**
+   - If a referenced model ID has been deleted or cannot be resolved, the reporting engine surfaces a diagnostic notice (`⚠️ Missing Dependency: Model ID X was not found`) and withholds affected outputs rather than substituting an arbitrary default or silent zero.
+   - Cells in sensitivity matrices with invalid mathematical conditions ($\text{WACC} \le g$) are marked with `INVALID` and withheld from valuation sums.
+3. **Multi-Format Export Matrix:**
+   - **PDF:** Polished printable PDF report formatted for standard 8.5" x 11" Letter page dimensions, running headers and footers with dynamic page numbering, institutional typography, and executive disclaimers.
+   - **Excel:** Structured multi-tab workbook with dedicated sheets for Executive Summary, Historical Financials, Forecast Projections, WACC Analysis, DCF Valuation & Equity Bridge, Scenario Analysis, Sensitivity & Simulation, and Audit & Disclosures.
+   - **CSV:** Tabular CSV exports formatted for downstream data integration and auditing.
+4. **Persistence & Snapshot Integrity:**
+   - `ReportModel` records in SQLite persist metadata, narrative commentary, model reference foreign keys, and section inclusion flags in JSON format.
+   - Large raw simulation iterations are not redundantly duplicated in database storage, ensuring instant loading and database compactness.
+
+---
+
+### 17. Decoupling Rules for Phase 10 (Financial Dashboards & Interactive Visualizations)
+
+1. **Dashboard Decoupling:** Phase 10 interactive dashboards will consume compiled analytical data structures from `ReportBundle` or domain result objects (`HistoricalAnalysisBundle`, `ForecastResult`, `WaccResult`, `DcfValuationResult`, `ScenarioAnalysisResult`, `SensitivityMatrixResult`, `MonteCarloSimulationResult`).
+2. **Formula Integrity:** Presentation and dashboard layers must not duplicate domain formulas, WACC weighting, or cash flow discounting algorithms.
+3. **Database Isolation:** All reports, scenarios, sensitivity models, and dashboards remain scoped to `ValuationProject` via foreign keys.
 
 

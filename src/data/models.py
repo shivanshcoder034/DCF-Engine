@@ -106,6 +106,11 @@ class ValuationProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    report_models = relationship(
+        "ReportModel",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ValuationProject id={self.id} name='{self.name}' company_id={self.company_id} status='{self.status}'>"
@@ -301,4 +306,26 @@ class SensitivityModel(Base):
 
     def __repr__(self) -> str:
         return f"<SensitivityModel id={self.id} name='{self.name}' project_id={self.project_id}>"
+
+
+class ReportModel(Base):
+    """Persisted valuation report configuration and metadata scoped to a valuation project."""
+
+    __tablename__ = "report_models"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("valuation_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=False)
+    subtitle = Column(String(255), nullable=True)
+    config_json = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    project = relationship("ValuationProject", back_populates="report_models")
+
+    def __repr__(self) -> str:
+        return f"<ReportModel id={self.id} name='{self.name}' project_id={self.project_id} title='{self.title}'>"
 

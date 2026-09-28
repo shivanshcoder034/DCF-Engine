@@ -31,6 +31,7 @@ from app.pages.wacc import render_wacc_page
 from app.pages.dcf import render_dcf_page
 from app.pages.scenarios import render_scenarios_page
 from app.pages.sensitivity import render_sensitivity_page
+from app.pages.reports import render_reports_page
 
 
 def setup_page_configuration() -> None:
@@ -49,7 +50,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 8 Active", status="Sensitivity Engine Ready")
+        render_phase_badge(phase_text="Phase 9 Active", status="Reporting Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -86,8 +87,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 8 • AI-Powered DCF Valuation Engine. "
-            "Financial dashboards scheduled in Phase 9."
+            "© Phase 9 • AI-Powered DCF Valuation Engine. "
+            "Reporting, presentation & export engine active."
         )
 
     return selected_page
@@ -98,27 +99,28 @@ def render_home_page() -> None:
     st.title("AI-Powered DCF Valuation and Sensitivity Engine")
     st.markdown(
         "A rigorous, modular financial modelling platform designed for institutional-grade "
-        "Discounted Cash Flow (DCF) valuations, scenario planning, and multi-variable sensitivity analysis."
+        "Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, "
+        "and automated presentation-grade exports."
     )
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 8 Active")
+    st.subheader("📌 Project Status: Phase 9 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Sensitivity Analysis & Simulation Active**\n\n"
-            "Phase 8 delivers multidimensional sensitivity analysis and Monte Carlo probabilistic simulation. "
-            "Analysts can stress-test valuation outputs across two-dimensional sensitivity matrices "
-            "(evaluating WACC vs. Perpetual Growth Rate or Exit Multiple) with interactive heatmaps, and run "
-            "deterministic, reproducible Monte Carlo simulations using Normal, Triangular, and Uniform distributions "
-            "with configurable random seeds."
+            "**Current Status: Reporting, Presentation & Export Engine Active**\n\n"
+            "Phase 9 delivers automated report compilation and multi-format export capabilities. "
+            "Analysts can configure customized valuation reports selecting underlying historical analyses, "
+            "forecasts, WACC estimations, DCF valuation cases, scenario comparisons, and sensitivity simulations. "
+            "Export formats include institutional multi-page PDF memorandums, structured multi-tab Excel financial "
+            "model workbooks (.xlsx), and modular CSV tables."
         )
         st.info(
-            "**Notice:** Interactive financial dashboards and dynamic Excel model exports are scheduled for Phases 9-11. "
-            "Sensitivity matrices and Monte Carlo simulations represent forward-looking mathematical evaluations based on user-supplied "
+            "**Notice:** Phase 10 will deliver advanced interactive financial dashboards and dynamic spreadsheet formula linking. "
+            "Valuation reports and exported models represent analytical evaluations based on user-supplied "
             "assumptions and not certified investment advice."
         )
 
@@ -139,10 +141,10 @@ def render_home_page() -> None:
         {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
         {"Phase": "Phase 7", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
-        {"Phase": "Phase 8 (Current)", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Complete"},
-        {"Phase": "Phase 9 (Next)", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
-        {"Phase": "Phase 10", "Title": "Dynamic Excel Model Exports", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
-        {"Phase": "Phase 11", "Title": "Valuation Reports & Memos", "Focus": "Institutional PDF/Markdown summary memos and audit trails", "Status": "Planned"},
+        {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver heatmaps, Monte Carlo", "Status": "Complete"},
+        {"Phase": "Phase 9 (Current)", "Title": "Reporting, Presentation & Export Engine", "Focus": "Multi-page PDF reports, openpyxl Excel models, CSVs, in-app preview", "Status": "Complete"},
+        {"Phase": "Phase 10 (Next)", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
+        {"Phase": "Phase 11", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
         {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
     ]
 
@@ -216,24 +218,7 @@ def main() -> None:
         render_sensitivity_page()
 
     elif selected_page == "Reports & Exports":
-        render_placeholder_card(
-            title="📑 Reports & Financial Model Exports",
-            phase="Phase 10 & 11",
-            target_module="src.exports",
-            description=(
-                "Institutional-quality financial model exports to Excel and comprehensive "
-                "executive summary documentation."
-            ),
-            planned_capabilities=[
-                "Automated Excel financial model generation with active formulas via openpyxl.",
-                "Executive valuation memo generation with charts and tables.",
-                "Audit trail export of all input assumptions and valuation bridges.",
-            ],
-            prerequisites=[
-                "Phase 6 DCF valuation engine",
-                "Phase 7 & 8 Scenario and sensitivity outputs",
-            ],
-        )
+        render_reports_page()
 
 
 if __name__ == "__main__":
