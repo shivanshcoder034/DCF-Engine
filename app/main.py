@@ -18,6 +18,7 @@ from app.pages.financial_data import render_financial_data_page
 from app.pages.manual_entry import render_manual_entry_page
 from app.pages.import_data import render_import_data_page
 from app.pages.historical_analysis import render_historical_analysis_page
+from app.pages.forecasting import render_forecasting_page
 
 
 def setup_page_configuration() -> None:
@@ -36,7 +37,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 3 Active", status="Analysis Engine Ready")
+        render_phase_badge(phase_text="Phase 4 Active", status="Forecasting Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -45,9 +46,9 @@ def render_sidebar() -> str:
             "Home",
             "Company & Financial Data",
             "Historical Analysis",
-            "DCF Valuation",
-            "WACC",
             "Forecasting",
+            "WACC",
+            "DCF Valuation",
             "Scenarios",
             "Sensitivity Analysis",
             "Reports & Exports",
@@ -68,8 +69,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 3 • AI-Powered DCF Valuation Engine. "
-            "Forecasting and DCF valuation models scheduled in subsequent phases."
+            "© Phase 4 • AI-Powered DCF Valuation Engine. "
+            "WACC estimation and DCF valuation models scheduled in subsequent phases."
         )
 
     return selected_page
@@ -85,21 +86,21 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 3 Active")
+    st.subheader("📌 Project Status: Phase 4 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Historical Financial Analysis Layer Active**\n\n"
-            "Phase 3 introduces comprehensive historical financial performance analytics: multi-year revenue growth "
-            "and CAGR, profitability margins (Gross, EBITDA, EBIT, Net), effective tax rates, working capital dynamics "
-            "(NWC, Operating NWC, ΔNWC), cash conversion cycle efficiency (DSO, DIO, DPO, CCC), and historical "
-            "cash flow indicators with interactive Plotly visualizations and automated audit diagnostics."
+            "**Current Status: Financial Forecasting & Projections Engine Active**\n\n"
+            "Phase 4 delivers transparent multi-year financial statement projections and Unlevered Free Cash Flow (UFCF) "
+            "schedules. Forward-looking models are calibrated from verified historical actuals with user-configurable drivers: "
+            "revenue growth rates, gross margins, operating expense ratios, working capital cycles (DSO, DIO, DPO), "
+            "CapEx intensity, and effective corporate tax rates. Scenarios can be versioned and saved to the project database."
         )
         st.warning(
-            "**Notice:** Forecasting engines, WACC calculations, and DCF valuation models are "
-            "scheduled for subsequent phases (Phases 4-6). Historical metrics are computed from verified records."
+            "**Notice:** Discounting, Weighted Average Cost of Capital (WACC), terminal value formulas, and DCF equity valuations "
+            "are scheduled for subsequent phases (Phases 5-6). Forecasts represent user assumptions and not investment recommendations."
         )
 
     with status_col2:
@@ -114,8 +115,8 @@ def render_home_page() -> None:
     roadmap_data = [
         {"Phase": "Phase 1", "Title": "Project Foundation & Architecture", "Focus": "Repository structure, configuration, shell, and docs", "Status": "Complete"},
         {"Phase": "Phase 2", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
-        {"Phase": "Phase 3 (Current)", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
-        {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Planned"},
+        {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
+        {"Phase": "Phase 4 (Current)", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
         {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Planned"},
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Planned"},
         {"Phase": "Phase 7", "Title": "Scenario Analysis", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Planned"},
@@ -180,27 +181,8 @@ def main() -> None:
     elif selected_page == "Historical Analysis":
         render_historical_analysis_page()
 
-    elif selected_page == "DCF Valuation":
-        render_placeholder_card(
-            title="💰 DCF Valuation Engine",
-            phase="Phase 6",
-            target_module="src.valuation",
-            description=(
-                "Core valuation engine computing Enterprise Value, Net Debt bridges, "
-                "and Equity Value per share based on discounted Unlevered Free Cash Flows."
-            ),
-            planned_capabilities=[
-                "Present value computation of projected explicit forecast period cash flows.",
-                "Perpetual Growth (Gordon Growth Model) terminal value formulation.",
-                "Exit Multiple Method terminal value formulation (e.g. EV/EBITDA).",
-                "Bridge from Enterprise Value to Equity Value (Cash, Debt, Minority Interest, Non-operating assets).",
-                "Implied per-share intrinsic value vs. current market pricing.",
-            ],
-            prerequisites=[
-                "Phase 4 Unlevered Free Cash Flow projections",
-                "Phase 5 Weighted Average Cost of Capital (WACC)",
-            ],
-        )
+    elif selected_page == "Forecasting":
+        render_forecasting_page()
 
     elif selected_page == "WACC":
         render_placeholder_card(
@@ -219,27 +201,29 @@ def main() -> None:
             ],
             prerequisites=[
                 "Phase 2 Company balance sheet and capital structure records (Ready)",
+                "Phase 4 Financial forecasting and NOPAT schedules (Ready)",
             ],
         )
 
-    elif selected_page == "Forecasting":
+    elif selected_page == "DCF Valuation":
         render_placeholder_card(
-            title="📈 Forecasting & Free Cash Flow Projections",
-            phase="Phase 4",
-            target_module="src.forecasting",
+            title="💰 DCF Valuation Engine",
+            phase="Phase 6",
+            target_module="src.valuation",
             description=(
-                "Driver-based multi-year financial forecasting generating explicit "
-                "Unlevered Free Cash Flow (UFCF) schedules."
+                "Core valuation engine computing Enterprise Value, Net Debt bridges, "
+                "and Equity Value per share based on discounted Unlevered Free Cash Flows."
             ),
             planned_capabilities=[
-                "Revenue projections driven by growth rate schedules and segment models.",
-                "Operating expense forecasting and EBITDA/EBIT bridge modeling.",
-                "Depreciation, Amortization, and Capital Expenditure (CapEx) schedules.",
-                "Net Working Capital (NWC) projections and annual cash flow adjustments.",
-                "Formulaic derivation of Unlevered Free Cash Flow: NOPAT + D&A - CapEx - ΔNWC.",
+                "Present value computation of projected explicit forecast period cash flows.",
+                "Perpetual Growth (Gordon Growth Model) terminal value formulation.",
+                "Exit Multiple Method terminal value formulation (e.g. EV/EBITDA).",
+                "Bridge from Enterprise Value to Equity Value (Cash, Debt, Minority Interest, Non-operating assets).",
+                "Implied per-share intrinsic value vs. current market pricing.",
             ],
             prerequisites=[
-                "Phase 3 Historical financial analysis and baseline ratios (Ready)",
+                "Phase 4 Unlevered Free Cash Flow projections (Ready)",
+                "Phase 5 Weighted Average Cost of Capital (WACC)",
             ],
         )
 
@@ -258,7 +242,7 @@ def main() -> None:
                 "Comparative visualization of key financial metrics across scenarios.",
             ],
             prerequisites=[
-                "Phase 4 Projection engine",
+                "Phase 4 Financial forecasting engine (Ready)",
                 "Phase 6 DCF valuation module",
             ],
         )

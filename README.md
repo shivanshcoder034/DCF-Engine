@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 3: Historical Financial Analysis**. The application features an immutable, deterministic financial analysis engine that processes stored multi-period historical statements, evaluates growth rates, multi-year CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, and historical Unlevered Free Cash Flow (UFCF) analytical estimates with interactive Plotly visual charts and accounting integrity audit diagnostics.
+> **Active Development Status:** The repository has completed **Phase 4: Financial Forecasting & Projections Engine**. The application features a deterministic forecasting engine that projects multi-year income statements, operating working capital schedules, and Unlevered Free Cash Flows (UFCF) calibrated from historical actuals. Users can model revenue growth, gross margins, operating expenses, turnover days (DSO, DIO, DPO), CapEx intensity, and corporate tax rates, with the ability to persist versioned scenarios directly into the project database.
 
 ---
 
@@ -10,19 +10,18 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-Key capabilities delivered in Phases 1–3:
+Key capabilities delivered in Phases 1–4:
 - **Phase 1 (Foundation):** Clean decoupled architecture, centralized configuration using `pathlib.Path`, and modular Streamlit shell.
 - **Phase 2 (Data Management):** Persistent SQLite storage with SQLAlchemy ORM, company profiles, valuation project workspaces, manual three-statement data entry, and multi-step CSV/Excel spreadsheet imports with column auto-mapping and full audit provenance.
-- **Phase 3 (Historical Analysis - Current):**
-  - **Revenue & Growth:** Period-over-period growth rates and multi-year CAGR calculations across valid chronological periods.
-  - **Profitability Margins:** Gross Profit Margin, EBITDA Margin, EBIT Margin, and Net Profit Margin, clearly distinguishing reported vs. derived figures and properly handling negative profits.
-  - **Operating Expenses & D&A:** OpEx and Depreciation & Amortization intensity (% of revenue).
-  - **Working Capital Analysis:** Net Working Capital ($CA - CL$), Operating Working Capital ($AR + Inventory - AP$), and period changes ($\Delta NWC$).
-  - **Working Capital Efficiency:** Days Sales Outstanding (DSO), Days Inventory Outstanding (DIO), Days Payables Outstanding (DPO), and Cash Conversion Cycle ($CCC = DSO + DIO - DPO$) using average balances or labeled ending-balance approximations.
-  - **Tax Rate Analysis:** Effective tax rate calculations ($Tax / PBT$) with sign normalization and unprofitable period checks.
-  - **Cash Flow Diagnostics:** Operating Cash Flow (CFO), CapEx intensity, Operating Cash Flow Less CapEx, and historical Unlevered Free Cash Flow (UFCF) analytical estimates ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$).
-  - **Interactive Plotly Charts:** Dual-axis revenue & YoY growth charts, multi-metric margin evolution lines, CFO vs. CapEx bars, and working capital cycle visualizations.
-  - **Data Quality & Audit Panel:** Automated audit checks verifying balance sheet equilibrium ($Assets = Liabilities + Equity$), period continuity, and conflicting multi-version records.
+- **Phase 3 (Historical Analysis):** Multi-year revenue growth, CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, historical UFCF estimates, and accounting integrity audit diagnostics.
+- **Phase 4 (Financial Forecasting - Current):**
+  - **Configurable Horizon:** Model 3 to 10 forecast years (default 5 years) anchored to the latest verified historical annual period.
+  - **Driver-Based Projections:** Constant or year-by-year schedules for revenue growth, gross margins, OpEx % of revenue, D&A % of revenue, CapEx % of revenue, and corporate tax rates.
+  - **Working Capital Modeling:** Operating Net Working Capital modeled via turnover days (DSO, DIO, DPO) or revenue percentages, computing annual $\Delta\text{Operating NWC}$.
+  - **Unlevered Free Cash Flow (UFCF) Derivation:** Formulaic projection: $\text{UFCF} = \text{NOPAT} + \text{D\&A} - \text{CapEx} - \Delta\text{Operating NWC}$.
+  - **Scenario Versioning & Persistence:** Save, load, and manage named forecast models (`ForecastModel`) scoped to valuation projects.
+  - **Consolidated Statement Tables:** Multi-period tables merging historical actuals with projected years.
+  - **Interactive Plotly Visualizations:** Revenue growth trajectory, margin evolution, and cash flow / UFCF bar-and-line charts.
 
 ---
 
@@ -52,7 +51,8 @@ dcf-valuation-engine/
 │   │   ├── financial_data.py   # Historical statement records & provenance viewer
 │   │   ├── manual_entry.py     # Manual financial statement line-item entry form
 │   │   ├── import_data.py      # CSV/Excel multi-step import processor & preview
-│   │   └── historical_analysis.py # Historical analysis view, Plotly charts & audit
+│   │   ├── historical_analysis.py # Historical analysis view, Plotly charts & audit
+│   │   └── forecasting.py      # Financial forecasting & UFCF projection view
 │   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
 │       ├── badges.py
@@ -62,7 +62,7 @@ dcf-valuation-engine/
 │   ├── __init__.py
 │   ├── data/                   # Data management, persistence & validation layer
 │   │   ├── __init__.py
-│   │   ├── models.py           # SQLAlchemy ORM models (Company, Project, etc.)
+│   │   ├── models.py           # SQLAlchemy ORM models (Company, ForecastModel, etc.)
 │   │   ├── database.py         # Engine configuration & session context manager
 │   │   ├── schemas.py          # Enums, standard line-item catalog & DTOs
 │   │   ├── validators.py       # Multi-field structural & accounting validator
@@ -77,9 +77,14 @@ dcf-valuation-engine/
 │   │   ├── cash_flow.py        # CFO, CapEx, OCF less CapEx, UFCF estimate
 │   │   ├── formatting.py       # Formatted statement & ratio DataFrames
 │   │   └── models.py           # Strongly typed metric & bundle dataclasses
+│   ├── forecasting/            # Financial forecasting & projection engine (Phase 4)
+│   │   ├── __init__.py
+│   │   ├── models.py           # ForecastAssumptions, YearForecast, ForecastResult
+│   │   ├── engine.py           # FinancialForecastingEngine baseline & projection logic
+│   │   ├── services.py         # ForecastService for persisting scenario models
+│   │   └── formatting.py       # Consolidated statement and UFCF bridge tables
 │   ├── valuation/              # DCF calculations, WACC, and terminal value (Phases 5-6)
-│   ├── forecasting/            # Driver-based financial forecasting & UFCF (Phase 4)
-│   ├── scenarios/              # Scenario profiles: Base, Bull, Bear (Phase 7)
+│   ├── scenarios/              # Cross-scenario comparison engine (Phase 7)
 │   ├── sensitivity/            # 2D sensitivity matrices & simulation engine (Phase 8)
 │   └── exports/                # Dynamic openpyxl Excel models & report generators (Phase 10)
 │
@@ -147,7 +152,7 @@ python -m streamlit run app/main.py
 | **Phase 1** | **Foundation & Architecture** | Repository structure, configuration, shell, and docs | **Complete** |
 | **Phase 2** | **Company & Financial Data** | SQLAlchemy models, statement storage, CSV/Excel imports | **Complete** |
 | **Phase 3** | **Historical Financial Analysis** | Growth, margins, working capital cycles, cash flow analysis | **Complete** |
-| **Phase 4** | Forecasting & Free Cash Flows | Driver-based revenue models, OpEx schedules, UFCF | *Planned* |
+| **Phase 4** | **Financial Forecasting** | Driver-based revenue models, OpEx schedules, UFCF | **Complete** |
 | **Phase 5** | WACC & Discount Rate Engine | CAPM, cost of debt, tax rates, capital weighting | *Planned* |
 | **Phase 6** | DCF Valuation & Terminal Value | Gordon Growth, Exit Multiples, Enterprise & Equity Value | *Planned* |
 | **Phase 7** | Scenario Analysis | Bull/Bear scenarios, parameter overrides, comparisons | *Planned* |
@@ -161,10 +166,11 @@ python -m streamlit run app/main.py
 
 ## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 3)
-- Future financial forecasting (revenue drivers, expense schedules, working capital forecasts) belongs to Phase 4.
-- Weighted Average Cost of Capital (WACC) estimation and DCF enterprise/equity valuation models belong to Phases 5 and 6.
-- The historical UFCF figure presented is an unprojected analytical metric ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$) evaluating historical cash flow generation, not a forecast or discounted valuation output.
+### Current Limitations (Phase 4)
+- Weighted Average Cost of Capital (WACC) estimation (CAPM, Beta, cost of debt) belongs to Phase 5.
+- DCF discounting, terminal value models (Gordon Growth and Exit Multiples), and enterprise/equity value per share calculations belong to Phase 6.
+- Cross-scenario comparison matrix tables belong to Phase 7.
+- Forecasts represent user-specified mathematical projections based on historical actuals and driver assumptions, not investment recommendations or guarantees.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

@@ -3,13 +3,13 @@
 
 ### 1. Architectural Philosophy and Design Principles
 
-The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an institutional-grade financial analysis platform. The system is designed following strict software engineering principles:
+The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an institutional-grade financial analysis and valuation platform. The system is designed following strict software engineering principles:
 
-- **Separation of Concerns (SoC):** The presentation layer (`app/`) is completely decoupled from the data management and analytical engines (`src/`). Under no circumstances should database queries, ORM manipulation, or financial calculation formulas be embedded directly within user interface components.
-- **Service & Repository Pattern:** Database access is encapsulated within repository classes (`src/data/repository.py`), while transactional workflows, validation enforcement, and business integrity rules reside in service layer classes (`src/data/services.py`).
-- **Pure Analytical Engines (`src/analysis/`):** Historical analysis is implemented as stateless, deterministic computational functions that consume verified records from the data layer and return strongly typed result dataclasses and DataFrames without mutating stored historical records.
-- **Transparent Provenance & Integrity:** The system rigorously distinguishes reported historical actuals from derived metrics (e.g., calculated gross profits or EBITDA estimates). No calculated metrics are ever written back into raw financial record tables as fake reported numbers.
-- **Audit Diagnostics:** The engine systematically audits input consistency, flagging accounting equation imbalances ($Assets \ne Liabilities + Equity$), period discontinuities, and conflicting multi-version records.
+- **Separation of Concerns (SoC):** The presentation layer (`app/`) is completely decoupled from the data management (`src/data/`), historical analytics (`src/analysis/`), and forecasting engines (`src/forecasting/`). Under no circumstances should database queries, ORM manipulation, or mathematical projection algorithms be embedded directly within user interface components.
+- **Service & Repository Pattern:** Database access is encapsulated within repository classes (`src/data/repository.py`), while transactional workflows, validation enforcement, and scenario persistence reside in service layer classes (`src/data/services.py`, `src/forecasting/services.py`).
+- **Deterministic Forecasting Engines (`src/forecasting/`):** Projections are implemented as stateless, deterministic computational functions that consume historical baselines and user-specified drivers to produce multi-year schedules without modifying raw historical records.
+- **Auditable Assumption Scenarios:** Forecast assumptions are explicitly versioned, scoped to project IDs, and persisted via `ForecastModel` entities. Every driver tracks its provenance (`historical_baseline`, `user_entered`, or `application_default`).
+- **Unlevered Cash Flow Rigor:** Unlevered Free Cash Flow (UFCF) projections adhere strictly to corporate finance formulations: $\text{UFCF} = \text{NOPAT} + \text{D\&A} - \text{CapEx} - \Delta\text{Operating NWC}$. Discounting and WACC estimation are decoupled into subsequent valuation modules.
 
 ---
 
@@ -23,89 +23,85 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 │      - companies.py           - projects.py                     │
 │      - financial_data.py      - manual_entry.py                 │
 │      - import_data.py         - historical_analysis.py          │
+│      - forecasting.py                                           │
 └───────────────────────────────┬─────────────────────────────────┘
-                                │ Invokes analysis & services
+                                │ Invokes forecasting & analysis
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                 Historical Analysis Engine Layer                │
-│                         (src/analysis/)                         │
-│   src/analysis/engine.py          │  src/analysis/metrics.py    │
-│   src/analysis/working_capital.py │  src/analysis/cash_flow.py  │
-│   src/analysis/formatting.py      │  src/analysis/models.py     │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │ Queries normalized records
-                                ▼
+│             Financial Forecasting & Projection Engine           │
+│                       (src/forecasting/)                        │
+│   src/forecasting/engine.py       │  src/forecasting/models.py  │
+│   src/forecasting/services.py     │  src/forecasting/formatting │
+└───────────────┬───────────────────────────────┬─────────────────┘
+                │ Consumes baselines            │ Persists models
+                ▼                               ▼
+┌───────────────────────────────┐ ┌───────────────────────────────┐
+│   Historical Analysis Engine  │ │  Data Management & Storage    │
+│        (src/analysis/)        │ │         (src/data/)           │
+│ - HistoricalAnalysisBundle    │ │ - ForecastModel persistence   │
+│ - Baselines & Turnover Days   │ │ - FinancialDataPoint records  │
+│ - CAGR & Margin Baselines     │ │ - database/dcf_engine.db      │
+└───────────────────────────────┘ └───────────────────────────────┘
+                                                │
+                                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Data Management & Service Layer              │
-│                           (src/data/)                           │
-│   src/data/services.py    │   src/data/validators.py            │
-│   src/data/importers.py   │   src/data/schemas.py               │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │ Calls typed repositories
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  Persistence & Repository Layer                 │
-│   src/data/repository.py  │   src/data/models.py                │
-│   src/data/database.py    │   database/dcf_engine.db            │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │ Serves future engines
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│               Analytical & Valuation Engines (Phases 4-12)      │
-│   src/forecasting/ │  src/valuation/  │  src/scenarios/         │
-│   src/sensitivity/ │  src/exports/                              │
+│               Valuation & Downstream Modules (Phases 5-12)      │
+│   src/valuation/ (WACC & DCF) │  src/scenarios/                 │
+│   src/sensitivity/            │  src/exports/                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 3. Historical Analysis Engine Architecture (`src/analysis/`)
+### 3. Forecasting Engine Architecture (`src/forecasting/`)
 
 | Module | Core Responsibility |
 | :--- | :--- |
-| `engine.py` | Coordinates record retrieval via `FinancialDataService`, currency filtering, unit scale harmonization, period alignment, conflict resolution, and quality audit checks. Returns a complete `HistoricalAnalysisBundle`. |
-| `metrics.py` | Pure calculation routines for revenue growth, multi-year CAGR, Gross Profit and Margin, EBITDA and Margin, EBIT and Margin, Net Profit Margin, and Effective Tax Rate. |
-| `working_capital.py` | Calculates Net Working Capital (NWC), Operating Working Capital, period-over-period $\Delta NWC$, Days Sales Outstanding (DSO), Days Inventory Outstanding (DIO), Days Payables Outstanding (DPO), and the Cash Conversion Cycle (CCC). |
-| `cash_flow.py` | Computes Operating Cash Flow (CFO), Capital Expenditure intensity, CFO Less CapEx, and historical Unlevered Free Cash Flow (UFCF) analytical estimates ($EBIT(1-T) + D\&A - CapEx - \Delta NWC$). |
-| `formatting.py` | Formats metrics into multi-period pandas DataFrames for Income Statements, Balance Sheets, Cash Flows, and Efficiency Ratios with explicit type labels (Reported vs. Derived). |
-| `models.py` | Strongly typed dataclasses: `FinancialPeriod`, `MetricResult`, `WorkingCapitalMetrics`, `CashFlowAnalysisMetrics`, `DataQualityIssue`, and `HistoricalAnalysisBundle`. |
+| `models.py` | Strongly typed dataclasses: `ForecastAssumptions` (multi-year growth, margin, OpEx, D&A, CapEx, WC turnover days, tax rate), `YearForecast` (annual income statement and cash flow metrics), and `ForecastResult` (consolidated multi-period bundle). |
+| `engine.py` | `FinancialForecastingEngine`: Extracts baselines from `HistoricalAnalysisBundle`, generates intelligent defaults, and executes deterministic multi-period projections. |
+| `services.py` | `ForecastService`: Coordinates saving, loading, listing, and deleting versioned `ForecastModel` entities in the SQLite database. |
+| `formatting.py` | Multi-period statement and UFCF bridge table formatters merging historical actuals and forecast years into unified DataFrames. |
 
 ---
 
-### 4. Data Selection, Period Alignment, and Conflict Rules
+### 4. Projection Mathematical Formulas & Sign Conventions
 
-1. **Chronological Period Sorting:**
-   - Financial periods are grouped strictly by `period_end_date` and sorted chronologically.
-   - Frequency isolation: Annual and quarterly periods are never blended into a single comparative time series.
-2. **Currency Integrity:**
-   - Calculations require single-currency consistency. If a project contains records across multiple currencies, the engine isolates records to the dominant or selected currency and logs a `DataQualityIssue(severity="warning")`.
-3. **Duplicate and Conflict Handling:**
-   - If multiple records exist for the same `(project_id, statement_type, line_item_code, period_end_date, data_classification)`, the engine selects the most recently updated record and generates an explicit audit notice detailing the conflicting record IDs.
-4. **Scale Harmonization:**
-   - All stored values are scaled to base monetary units using `FinancialUnit.multiplier(unit)` prior to formula evaluation, ensuring exact consistency across thousands, millions, and raw units.
-5. **Zero Denominator & Undefined Math:**
-   - Zero denominators (e.g. zero revenue for margin calculation, zero prior value for growth, non-positive values for CAGR) produce structured `MetricResult(value=None, status="unavailable", explanation=...)` rather than crashing, fabricating zero, or returning `NaN`/`inf`.
-
----
-
-### 5. Historical Analysis Output Contracts
-
-Every calculated metric is encapsulated within a `MetricResult` DTO:
-- `metric_code`: Machine-readable identifier (e.g. `revenue_growth`, `gross_margin`, `ebitda_margin`, `ccc`).
-- `metric_name`: Human-readable label.
-- `value`: Numeric float value, or `None` if uncomputable.
-- `unit_or_type`: Output unit (`percentage`, `currency`, `days`, `ratio`).
-- `period_label`: Assigned period tag (e.g. `FY2023`, `Q3 2023`).
-- `is_reported`: Boolean flag clearly distinguishing reported items from derived figures.
-- `source_line_items`: Line-item codes used in the calculation.
-- `status`: Execution status (`calculated`, `reported`, `unavailable`, `warning`).
-- `explanation`: Contextual reason when a metric is unavailable or derived.
+1. **Revenue Trajectory:**
+   $$\text{Revenue}_t = \text{Revenue}_{t-1} \times (1 + \text{Growth Rate}_t)$$
+   *(Base Period: Last verified historical annual revenue).*
+2. **COGS & Gross Profit:**
+   $$\text{COGS}_t = \text{Revenue}_t \times (1 - \text{Gross Margin}_t) \quad\Big|\quad \text{Gross Profit}_t = \text{Revenue}_t - \text{COGS}_t$$
+3. **Operating Expenses & EBITDA:**
+   $$\text{OpEx}_t = \text{Revenue}_t \times \text{OpEx}\%_t \quad\Big|\quad \text{EBITDA}_t = \text{Gross Profit}_t - \text{OpEx}_t$$
+4. **Depreciation, Amortization & Operating Profit (EBIT):**
+   $$\text{D\&A}_t = \text{Revenue}_t \times \text{D\&A}\%_t \quad\Big|\quad \text{EBIT}_t = \text{EBITDA}_t - \text{D\&A}_t$$
+5. **Operating Taxes & NOPAT:**
+   $$\text{Taxes on EBIT}_t = \max(0, \text{EBIT}_t \times \text{Tax Rate}) \quad\Big|\quad \text{NOPAT}_t = \text{EBIT}_t \times (1 - \text{Tax Rate})$$
+6. **Operating Working Capital (Operating NWC):**
+   - *Turnover Days Method (Default):*
+     $$\text{AR}_t = \frac{\text{Revenue}_t \times \text{DSO}_t}{365} \quad\Big|\quad \text{Inventory}_t = \frac{\text{COGS}_t \times \text{DIO}_t}{365} \quad\Big|\quad \text{AP}_t = \frac{\text{COGS}_t \times \text{DPO}_t}{365}$$
+     $$\text{Operating NWC}_t = \text{AR}_t + \text{Inventory}_t - \text{AP}_t$$
+   - *Revenue % Fallback:* $\text{Operating NWC}_t = \text{Revenue}_t \times \text{NWC}\%_t$
+   - *Annual Change:* $\Delta\text{Operating NWC}_t = \text{Operating NWC}_t - \text{Operating NWC}_{t-1}$
+7. **Capital Expenditures (CapEx):**
+   $$\text{CapEx}_t = \text{Revenue}_t \times \text{CapEx}\%_t$$
+8. **Unlevered Free Cash Flow (UFCF):**
+   $$\text{UFCF}_t = \text{NOPAT}_t + \text{D\&A}_t - \text{CapEx}_t - \Delta\text{Operating NWC}_t$$
+   *(Sign convention: CapEx and $\Delta\text{Operating NWC}$ increases are subtractions from operating cash flow).*
 
 ---
 
-### 6. Decoupling Rules for Future Phases (Phases 4-12)
+### 5. Persistence & Scenario Versioning
 
-As development progresses into **Phase 4 (Financial Forecasting)** and **Phase 5 (WACC)**:
-1. Forecasting routines will consume historical baselines from `HistoricalAnalysisBundle` (e.g. baseline margins, working capital days, CapEx % of revenue).
-2. Future forecast schedules and WACC calculations will reside in their dedicated `src/` modules (`src/forecasting/`, `src/valuation/`) without modifying `src/analysis/` or database records.
-3. The historical analysis engine remains an immutable retrospective audit tool.
+- **Entity:** `ForecastModel` table in SQLite (`database/dcf_engine.db`).
+- **Columns:** `id`, `project_id` (FK to `valuation_projects.id`), `name`, `horizon_years`, `base_period_label`, `assumptions_json`, `description`, `created_at`, `updated_at`.
+- **Isolation:** Multiple named forecast models (e.g. "Base Case", "Conservative Case", "Aggressive Growth") can be saved for the same project without overwriting one another or modifying raw historical records.
+
+---
+
+### 6. Decoupling Rules for Phase 5 (WACC) & Phase 6 (DCF Valuation)
+
+1. Downstream DCF valuation modules will consume the projected `annual_forecasts` from `ForecastResult` (specifically the explicit `ufcf` stream).
+2. Phase 5 will estimate the discount rate (WACC) independently based on capital structure, beta, risk-free rate, and cost of debt.
+3. Phase 6 will discount the projected `ufcf` stream using WACC and compute the terminal value, enterprise value, and equity value per share.
+4. Historical records, analysis bundles, and forecast schedules remain cleanly isolated.

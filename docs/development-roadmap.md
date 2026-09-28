@@ -46,19 +46,25 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 4: Financial Forecasting & Projections Engine *(Status: Planned)*
-- **Objective:** Generate multi-year forward-looking financial statement schedules and cash flow bridges.
-- **Key Capabilities:**
-  - Driver-based revenue forecasting (segment growth, volume/price dynamics).
-  - Operating expense modeling and EBITDA-to-EBIT bridge calculations.
+### Phase 4: Financial Forecasting & Projections Engine *(Status: Complete)*
+- **Objective:** Generate deterministic multi-year forward-looking financial statement schedules and Unlevered Free Cash Flow (UFCF) projections.
+- **Key Deliverables:**
+  - Dedicated forecasting engine (`src/forecasting/`) calibrated from historical actuals.
+  - Configurable horizon control (3 to 10 years, default 5 years).
+  - Driver-based revenue projections (constant rate or year-by-year schedule).
+  - Gross profit, operating expenses, and EBITDA-to-EBIT bridges.
   - Depreciation & Amortization schedules and Capital Expenditures (CapEx).
-  - Working capital forecasting and balance sheet balance reconciliation.
-  - Formulaic derivation of Unlevered Free Cash Flows (NOPAT + D&A - CapEx - ΔNWC).
+  - Operating Net Working Capital projections via turnover days (DSO, DIO, DPO) or revenue percentages.
+  - Annual change in operating working capital ($\Delta\text{Operating NWC}$) and NOPAT derivations.
+  - Formulaic Unlevered Free Cash Flow projections ($\text{UFCF} = \text{NOPAT} + \text{D\&A} - \text{CapEx} - \Delta\text{Operating NWC}$).
+  - Scenario persistence via `ForecastModel` entities allowing users to save and reload versioned assumption sets.
+  - Consolidated multi-period statement tables merging historical actuals and projected years.
+  - Detailed UFCF derivation bridge table and interactive Plotly trajectory charts.
 
 ---
 
 ### Phase 5: WACC & Discount Rate Engine *(Status: Planned)*
-- **Objective:** Compute the Weighted Average Cost of Capital (WACC) reflecting enterprise risk.
+- **Objective:** Compute the Weighted Average Cost of Capital (WACC) reflecting enterprise operating and financial risk.
 - **Key Capabilities:**
   - Cost of Equity estimation via the Capital Asset Pricing Model (CAPM).
   - Beta estimation, raw vs. adjusted betas, and Hamada unlevering/relevering routines.

@@ -81,6 +81,11 @@ class ValuationProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    forecast_models = relationship(
+        "ForecastModel",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ValuationProject id={self.id} name='{self.name}' company_id={self.company_id} status='{self.status}'>"
@@ -162,3 +167,26 @@ class FinancialDataPoint(Base):
             f"<FinancialDataPoint id={self.id} item='{self.line_item_code}' "
             f"period={self.period_end_date} val={self.value} {self.currency}>"
         )
+
+
+class ForecastModel(Base):
+    """Persisted forecast assumption set and model configuration."""
+
+    __tablename__ = "forecast_models"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("valuation_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    horizon_years = Column(Integer, nullable=False, default=5)
+    base_period_label = Column(String(50), nullable=False)
+    assumptions_json = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    project = relationship("ValuationProject", back_populates="forecast_models")
+
+    def __repr__(self) -> str:
+        return f"<ForecastModel id={self.id} name='{self.name}' project_id={self.project_id} horizon={self.horizon_years}>"
+
