@@ -4,7 +4,7 @@ Provides SQLAlchemy persistence, schemas, validation, repositories, services,
 and multi-format file importers.
 """
 
-from src.data.models import Base, Company, FinancialDataPoint, ForecastModel, ImportBatch, ValuationProject, WaccModel
+from src.data.models import Base, Company, DcfModel, FinancialDataPoint, ForecastModel, ImportBatch, ValuationProject, WaccModel
 from src.data.database import engine, get_db_session, init_db
 from src.data.schemas import (
     DataClassification,
@@ -26,6 +26,7 @@ __all__ = [
     "ValuationProject",
     "ForecastModel",
     "WaccModel",
+    "DcfModel",
     "ImportBatch",
     "FinancialDataPoint",
     "engine",

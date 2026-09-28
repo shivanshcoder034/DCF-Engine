@@ -91,6 +91,11 @@ class ValuationProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    dcf_models = relationship(
+        "DcfModel",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ValuationProject id={self.id} name='{self.name}' company_id={self.company_id} status='{self.status}'>"
@@ -214,4 +219,28 @@ class WaccModel(Base):
 
     def __repr__(self) -> str:
         return f"<WaccModel id={self.id} name='{self.name}' project_id={self.project_id}>"
+
+
+class DcfModel(Base):
+    """Persisted DCF valuation assumption set and model configuration."""
+
+    __tablename__ = "dcf_models"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("valuation_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    forecast_model_id = Column(Integer, ForeignKey("forecast_models.id", ondelete="SET NULL"), nullable=True)
+    wacc_model_id = Column(Integer, ForeignKey("wacc_models.id", ondelete="SET NULL"), nullable=True)
+    assumptions_json = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    project = relationship("ValuationProject", back_populates="dcf_models")
+    forecast_model = relationship("ForecastModel")
+    wacc_model = relationship("WaccModel")
+
+    def __repr__(self) -> str:
+        return f"<DcfModel id={self.id} name='{self.name}' project_id={self.project_id}>"
 

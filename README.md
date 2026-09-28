@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 5: WACC Estimation Engine**. The application features a transparent, deterministic cost of capital engine calculating the enterprise hurdle and discount rate by blending the **Cost of Equity (CAPM)** and **After-Tax Cost of Debt** weighted by enterprise capital structure. Inputs support strict provenance tracking between historical actuals, Phase 4 forecast tax scenarios, and user assumptions, with the ability to persist versioned WACC cases directly into the project database.
+> **Active Development Status:** The repository has completed **Phase 6: DCF Valuation Engine**. The application features an institutional-grade Discounted Cash Flow valuation engine that consumes projected Unlevered Free Cash Flows (UFCF) from Phase 4 and the discount rate (WACC) from Phase 5. The engine supports End-of-Year and Mid-Year discounting conventions, Gordon Growth Perpetuity and Exit Multiple terminal value models, a fully articulated Enterprise-Value-to-Equity-Value bridge, and implied intrinsic share price calculations, with named scenario persistence directly in SQLite.
 
 ---
 
@@ -10,7 +10,7 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-Key capabilities delivered in Phases 1–5:
+Key capabilities delivered in Phases 1–6:
 - **Phase 1 (Foundation):** Clean decoupled architecture, centralized configuration using `pathlib.Path`, and modular Streamlit shell.
 - **Phase 2 (Data Management):** Persistent SQLite storage with SQLAlchemy ORM, company profiles, valuation project workspaces, manual three-statement data entry, and multi-step CSV/Excel spreadsheet imports with column auto-mapping and full audit provenance.
 - **Phase 3 (Historical Analysis):** Multi-year revenue growth, CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, historical UFCF estimates, and accounting integrity audit diagnostics.
@@ -20,14 +20,21 @@ Key capabilities delivered in Phases 1–5:
   - **Working Capital Modeling:** Operating Net Working Capital modeled via turnover days (DSO, DIO, DPO) or revenue percentages, computing annual $\Delta\text{Operating NWC}$.
   - **Unlevered Free Cash Flow (UFCF) Derivation:** Formulaic projection: $\text{UFCF} = \text{NOPAT} + \text{D\&A} - \text{CapEx} - \Delta\text{Operating NWC}$.
   - **Scenario Versioning & Persistence:** Save, load, and manage named forecast models (`ForecastModel`) scoped to valuation projects.
-- **Phase 5 (WACC Estimation Engine - Current):**
+- **Phase 5 (WACC Estimation Engine):**
   - **Cost of Equity via CAPM:** Deterministic formulation: $\text{Cost of Equity} = R_f + \beta \times \text{ERP}$, with provenance tracking and sanity checks on negative/extreme inputs.
   - **Cost of Debt & Tax Shield:** User-entered borrowing spread or historical accounting interest rate estimate ($\text{Interest Expense} / \text{Debt}$), with interest deductibility tax shield: $K_{d,\text{after}} = K_d \times (1 - t)$.
-  - **Tax Rate Provenance:** Support for manual statutory rate, inheritance from Phase 4 forecast scenarios, or historical effective tax rate.
   - **Capital Structure Weighting:** Debt and equity amounts based on market capitalization or balance sheet book equity proxy, validating non-negative capital and non-zero capital bases.
-  - **WACC Formulation:** $\text{WACC} = (W_e \times K_e) + (W_d \times K_{d,\text{after}})$.
   - **Named Scenario Persistence:** Save, load, and version named WACC cases (`WaccModel`) associated with valuation projects.
-  - **Visualizations & Audit Bridge:** Plotly capital structure donut chart, horizontal WACC contribution bar chart, component breakdown matrices, and formula derivation bridge.
+- **Phase 6 (DCF Valuation Engine - Current):**
+  - **Cash Flow Discounting Schedules:** Multi-period discounting with user-configurable timing conventions (End-of-Year $t=1, \dots, N$ or Mid-Year $t=0.5, \dots, N-0.5$).
+  - **Dual Terminal Value Methodologies:**
+    - *Gordon Growth Perpetuity:* $\text{TV} = \frac{\text{UFCF}_N \times (1 + g)}{\text{WACC} - g}$, enforcing $\text{WACC} > g$.
+    - *Exit Multiple Method:* $\text{TV} = \text{Terminal EBITDA}_N \times \text{Exit Multiple}$.
+  - **Enterprise Value Formulation:** $\text{Enterprise Value} = \text{PV of Forecast UFCF} + \text{PV of Terminal Value}$.
+  - **Enterprise-to-Equity Value Bridge:** Explicit line-item reconciliation adding Cash & Equivalents, deducting Interest-Bearing Debt, Minority Interest, and Preferred Stock, plus signed non-operating adjustments.
+  - **Implied Intrinsic Share Price:** Evaluated as $\text{Equity Value} / \text{Diluted Shares Outstanding}$ with safe withholding when share count is absent.
+  - **Named DCF Scenario Persistence:** Save, load, and version named DCF models (`DcfModel`) in SQLite.
+  - **Visualizations & Bridges:** Plotly cash flow discounting trajectory chart, enterprise value composition donut chart, and complete mathematical bridge tables.
 
 ---
 
@@ -59,7 +66,8 @@ dcf-valuation-engine/
 │   │   ├── import_data.py      # CSV/Excel multi-step import processor & preview
 │   │   ├── historical_analysis.py # Historical analysis view, Plotly charts & audit
 │   │   ├── forecasting.py      # Financial forecasting & UFCF projection view
-│   │   └── wacc.py             # WACC estimation, CAPM, cost of debt & capital structure view
+│   │   ├── wacc.py             # WACC estimation, CAPM, cost of debt & capital structure view
+│   │   └── dcf.py              # DCF valuation engine, cash flow discounting & equity bridge view
 │   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
 │       ├── badges.py
@@ -97,7 +105,13 @@ dcf-valuation-engine/
 │   │   ├── engine.py           # WaccEngine baseline extraction & orchestration
 │   │   ├── services.py         # WaccService for persisting named WACC models
 │   │   └── formatting.py       # Matrices, capital structure tables & Plotly charts
-│   ├── valuation/              # DCF calculations and terminal value (Phase 6)
+│   ├── dcf/                    # DCF Valuation & Terminal Value Engine (Phase 6)
+│   │   ├── __init__.py
+│   │   ├── models.py           # DcfAssumptions, discounting schedules & DcfValuationResult
+│   │   ├── calculations.py     # Deterministic discounting, Gordon Growth, exit multiples & bridge
+│   │   ├── engine.py           # DcfEngine orchestrating linked forecast and WACC models
+│   │   ├── services.py         # DcfService for persisting named DCF valuation scenarios
+│   │   └── formatting.py       # Discounting schedules, bridge tables & valuation charts
 │   ├── scenarios/              # Cross-scenario comparison engine (Phase 7)
 │   ├── sensitivity/            # 2D sensitivity matrices & simulation engine (Phase 8)
 │   └── exports/                # Dynamic openpyxl Excel models & report generators (Phase 10)
@@ -168,7 +182,7 @@ python -m streamlit run app/main.py
 | **Phase 3** | **Historical Financial Analysis** | Growth, margins, working capital cycles, cash flow analysis | **Complete** |
 | **Phase 4** | **Financial Forecasting** | Driver-based revenue models, OpEx schedules, UFCF | **Complete** |
 | **Phase 5** | **WACC & Discount Rate Engine** | CAPM, cost of debt, tax rates, capital weighting | **Complete** |
-| **Phase 6** | DCF Valuation & Terminal Value | Gordon Growth, Exit Multiples, Enterprise & Equity Value | *Planned* |
+| **Phase 6** | **DCF Valuation & Terminal Value** | Gordon Growth, Exit Multiples, Enterprise & Equity Value | **Complete** |
 | **Phase 7** | Scenario Analysis | Bull/Bear scenarios, parameter overrides, comparisons | *Planned* |
 | **Phase 8** | Sensitivity Analysis & Simulation | 2D sensitivity matrices, driver tornado charts | *Planned* |
 | **Phase 9** | Financial Dashboards | Interactive Plotly statement and valuation charts | *Planned* |
@@ -180,11 +194,10 @@ python -m streamlit run app/main.py
 
 ## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 5)
-- DCF discounting, terminal value models (Gordon Growth and Exit Multiples), and enterprise/equity value per share calculations belong to Phase 6.
-- Cross-scenario comparison matrix tables belong to Phase 7.
-- Multi-dimensional sensitivity matrices and Monte Carlo simulations belong to Phase 8.
-- WACC estimations represent forward-looking analytical hurdle rates based on user assumptions and historical accounting proxies, not guaranteed financing costs or investment advice.
+### Current Limitations (Phase 6)
+- Cross-scenario comparison matrix tables, Bull/Bear presets, and multi-scenario ranking belong to Phase 7.
+- Multi-dimensional sensitivity matrices (e.g. WACC vs. Terminal Growth Rate) and Monte Carlo simulations belong to Phase 8.
+- DCF intrinsic valuations represent forward-looking mathematical evaluations based on user-supplied driver assumptions and do not constitute certified investment advice or equity purchase recommendations.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

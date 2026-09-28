@@ -140,13 +140,54 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 - **Entities:**
   - `ForecastModel`: Table storing multi-year financial projection assumption sets (`horizon_years`, `base_period_label`, `assumptions_json`).
   - `WaccModel`: Table storing named cost-of-capital assumption scenarios (`name`, `assumptions_json`, `description`, timestamps).
-- **Project Isolation:** Scenarios are linked via `project_id` foreign keys with cascade deletion. Multiple named scenarios (e.g. "Base WACC", "Conservative WACC") can coexist without colliding or mutating historical financial actuals.
+  - `DcfModel`: Table storing named DCF valuation assumption sets, linking `forecast_model_id`, `wacc_model_id`, `discounting_convention`, `terminal_inputs`, `bridge_inputs`, and `diluted_shares`.
+- **Project Isolation:** All scenarios are linked via `project_id` foreign keys with cascade deletion. Multiple named scenarios can coexist without colliding or mutating historical financial actuals.
 
 ---
 
-### 9. Decoupling Rules for Phase 6 (DCF Valuation Engine)
+### 9. DCF Valuation Engine Architecture (`src/dcf/`)
 
-1. **Cash Flow Source:** Phase 6 DCF valuation will consume projected annual `ufcf` values directly from `ForecastResult` generated in Phase 4.
-2. **Discount Rate Source:** Phase 6 will consume the discount rate directly from `WaccResult.wacc` generated in Phase 5.
-3. **Terminal Value Formulation:** Phase 6 will implement Perpetual Growth (Gordon Growth Model) and Exit Multiple methods, computing Enterprise Value, Net Debt bridges, and Equity Value per share.
-4. **Integrity:** Forecasts, WACC models, and historical records remain independently auditable without circular dependencies.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `models.py` | Strongly typed dataclasses: `DiscountingConvention`, `TerminalValueMethod`, `TerminalValueInputs`, `EquityBridgeInputs`, `DcfAssumptions`, `YearDiscountingResult`, `TerminalValueResult`, `EquityBridgeResult`, and `DcfValuationResult`. |
+| `calculations.py` | Pure, deterministic mathematical functions for discounting cash flows ($DF = (1 + \text{WACC})^{-t}$), evaluating Gordon Growth ($\text{WACC} > g$) and Exit Multiple terminal values, executing the equity bridge, and computing implied intrinsic value per share. |
+| `engine.py` | `DcfEngine`: Extracts baseline cash and debt for the equity bridge, coordinates linked Phase 4 forecast cash flows and Phase 5 WACC rates, builds default assumptions, and orchestrates valuation execution. |
+| `services.py` | `DcfService`: Coordinates saving, loading, listing, and deleting named `DcfModel` entities in SQLite. |
+| `formatting.py` | Formats cash flow discounting schedules, enterprise-to-equity bridge tables, and generates Plotly visualization charts (cash flow discounting trajectory and EV composition donut). |
+
+---
+
+### 10. DCF Mathematical Formulas, Terminal Values & Equity Bridge
+
+1. **Cash Flow Discounting Schedule:**
+   $$\text{Discount Factor}_t = \frac{1}{(1 + \text{WACC})^t}$$
+   - *End-of-Year Convention (Default):* $t = 1.0, 2.0, \dots, N$.
+   - *Mid-Year Convention:* $t = 0.5, 1.5, \dots, N - 0.5$.
+   $$\text{PV of Forecast UFCF} = \sum_{t=1}^N \left(\text{UFCF}_t \times \text{Discount Factor}_t\right)$$
+2. **Terminal Value (TV) Formulations:**
+   - *Method A — Gordon Growth Perpetuity:*
+     $$\text{UFCF}_{N+1} = \text{UFCF}_N \times (1 + g) \quad\Big|\quad \text{Terminal Value} = \frac{\text{UFCF}_{N+1}}{\text{WACC} - g}$$
+     *(Enforces strict requirement: $\text{WACC} > g$. If condition is violated, terminal value is withheld).*
+   - *Method B — Exit Multiple Method:*
+     $$\text{Terminal Value} = \text{Terminal Year EBITDA}_N \times \text{Exit Multiple}$$
+   - *Discounting Terminal Value:*
+     $$\text{PV of Terminal Value} = \text{Terminal Value} \times \frac{1}{(1 + \text{WACC})^N}$$
+3. **Enterprise Value (EV):**
+   $$\text{Enterprise Value} = \text{PV of Forecast UFCF} + \text{PV of Terminal Value}$$
+4. **Enterprise Value to Equity Value Bridge:**
+   $$\text{Equity Value} = \text{EV} + \text{Cash} - \text{Debt} - \text{Minority Interest} - \text{Preferred Stock} + \text{Other Adjustments}$$
+   - Cash and liquid equivalents are added.
+   - Total interest-bearing debt (Short-Term + Long-Term) is deducted.
+   - Non-controlling minority interest claims and preferred equity claims are deducted.
+   - Net Debt is defined as $\text{Debt} - \text{Cash}$.
+5. **Implied Intrinsic Value Per Share:**
+   $$\text{Implied Value per Share} = \frac{\text{Equity Value}}{\text{Diluted Common Shares Outstanding}}$$
+   - Requires positive diluted share count. If missing or non-positive, implied per share value is safely withheld while preserving Enterprise and Equity Value.
+
+---
+
+### 11. Decoupling Rules for Phase 7 (Scenario Analysis) & Phase 8 (Sensitivity)
+
+1. **Scenario Analysis (Phase 7):** Will consume saved `ForecastModel`, `WaccModel`, and `DcfModel` configurations to run comparative cross-scenario tables (Base vs. Bull vs. Bear) without modifying underlying valuation calculations.
+2. **Sensitivity Analysis (Phase 8):** Will evaluate 2D matrices (e.g. WACC vs. Perpetual Growth Rate $g$, or WACC vs. Exit Multiple) using the pure calculation functions in `src/dcf/calculations.py`.
+3. **Historical Data Isolation:** Historical statements, analysis bundles, forecast projections, WACC hurdles, and DCF models remain modular, auditable, and decoupled.

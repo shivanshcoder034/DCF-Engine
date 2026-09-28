@@ -78,14 +78,19 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 6: DCF Valuation & Terminal Value Engine *(Status: Planned)*
-- **Objective:** Discount projected free cash flows to determine enterprise value and intrinsic equity value.
-- **Key Capabilities:**
-  - Present Value (PV) discounting of explicit forecast period Unlevered Free Cash Flows using calculated WACC.
-  - Perpetual Growth Method (Gordon Growth Model) terminal value formulation.
-  - Exit Multiple Method (EV/EBITDA multiple) terminal value formulation.
-  - Enterprise Value to Equity Value bridge (adding cash, deducting net debt, non-operating adjustments).
-  - Implied intrinsic value per share vs. current market pricing comparison.
+### Phase 6: DCF Valuation & Terminal Value Engine *(Status: Complete)*
+- **Objective:** Compute enterprise value, equity value, and intrinsic share price by discounting projected Unlevered Free Cash Flows (UFCF) and adding discounted terminal enterprise value.
+- **Key Deliverables:**
+  - Dedicated DCF valuation package (`src/dcf/`) completely decoupled from presentation code and database direct access.
+  - Multi-period cash flow discounting supporting user-configurable timing conventions: End-of-Year ($t = 1.0, \dots, N$) and Mid-Year ($t = 0.5, \dots, N - 0.5$).
+  - Gordon Growth Perpetuity Model: $\text{TV} = \frac{\text{UFCF}_N \times (1 + g)}{\text{WACC} - g}$, enforcing $\text{WACC} > g$.
+  - Exit Multiple Method: $\text{TV} = \text{Terminal EBITDA}_N \times \text{Exit Multiple}$.
+  - Terminal value discounting aligned with explicit forecast period horizon.
+  - Enterprise Value formulation: $\text{Enterprise Value} = \text{PV of Forecast UFCF} + \text{PV of Terminal Value}$.
+  - Articulated Enterprise-to-Equity Value bridge: $\text{Equity Value} = \text{EV} + \text{Cash} - \text{Debt} - \text{Minority Interest} - \text{Preferred Stock} + \text{Other Adjustments}$.
+  - Intrinsic share price derivation: $\text{Implied Value per Share} = \text{Equity Value} / \text{Diluted Common Shares Outstanding}$ with safe withholding when shares are unsupplied.
+  - Named DCF scenario persistence via `DcfModel` in SQLite, supporting multiple named valuation cases per valuation project.
+  - Streamlit interface (`app/pages/dcf.py`) featuring headline KPI metrics, interactive timing/terminal/bridge tabs, discounting schedule tables, equity bridge tables, Plotly trajectory and EV composition charts, and model audit diagnostics.
 
 ---
 

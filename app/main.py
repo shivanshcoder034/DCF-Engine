@@ -28,6 +28,7 @@ from app.pages.import_data import render_import_data_page
 from app.pages.historical_analysis import render_historical_analysis_page
 from app.pages.forecasting import render_forecasting_page
 from app.pages.wacc import render_wacc_page
+from app.pages.dcf import render_dcf_page
 
 
 def setup_page_configuration() -> None:
@@ -46,7 +47,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 5 Active", status="WACC Engine Ready")
+        render_phase_badge(phase_text="Phase 6 Active", status="DCF Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -78,8 +79,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 5 • AI-Powered DCF Valuation Engine. "
-            "DCF valuation models scheduled in Phase 6."
+            "© Phase 6 • AI-Powered DCF Valuation Engine. "
+            "Scenario analysis scheduled in Phase 7."
         )
 
     return selected_page
@@ -95,20 +96,22 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 5 Active")
+    st.subheader("📌 Project Status: Phase 6 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: WACC & Discount Rate Engine Active**\n\n"
-            "Phase 5 delivers transparent Cost of Capital estimation combining the Capital Asset Pricing Model (CAPM) "
-            "for Cost of Equity, After-Tax Cost of Debt with interest deductibility tax shields, and market/book capital structure weights. "
-            "Named WACC cases can be versioned, audited with source provenance notes, and saved directly to the project database."
+            "**Current Status: DCF Valuation Engine Active**\n\n"
+            "Phase 6 delivers transparent, deterministic Discounted Cash Flow (DCF) enterprise valuations. "
+            "Projected Unlevered Free Cash Flows (UFCF) from Phase 4 are discounted at the Phase 5 WACC hurdle rate "
+            "using user-configurable timing conventions (End-of-Year or Mid-Year). Terminal values are evaluated "
+            "via Gordon Growth Perpetuity or Exit Multiple EV/EBITDA models, and bridged to Implied Common Equity Value "
+            "and Intrinsic Value Per Share."
         )
         st.warning(
-            "**Notice:** DCF valuation discounting, Gordon Growth terminal value formulas, and equity value per share bridges "
-            "are scheduled for Phase 6. WACC outputs represent analytical cost-of-capital estimates and not certified financial advice."
+            "**Notice:** Multi-scenario comparisons and 2D sensitivity matrices are scheduled for Phases 7-8. "
+            "DCF intrinsic valuations represent mathematical calculations based on user-supplied assumptions and not certified investment advice."
         )
 
     with status_col2:
@@ -125,8 +128,8 @@ def render_home_page() -> None:
         {"Phase": "Phase 2", "Title": "Company Profiles & Financial Data", "Focus": "SQLAlchemy persistence, statement records, CSV/Excel imports", "Status": "Complete"},
         {"Phase": "Phase 3", "Title": "Historical Financial Analysis", "Focus": "Growth, margins, working capital cycles, cash flow analysis", "Status": "Complete"},
         {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
-        {"Phase": "Phase 5 (Current)", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
-        {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Planned"},
+        {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
+        {"Phase": "Phase 6 (Current)", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
         {"Phase": "Phase 7", "Title": "Scenario Analysis", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Planned"},
         {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
         {"Phase": "Phase 9", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
@@ -196,26 +199,7 @@ def main() -> None:
         render_wacc_page()
 
     elif selected_page == "DCF Valuation":
-        render_placeholder_card(
-            title="💰 DCF Valuation Engine",
-            phase="Phase 6",
-            target_module="src.valuation",
-            description=(
-                "Core valuation engine computing Enterprise Value, Net Debt bridges, "
-                "and Equity Value per share based on discounted Unlevered Free Cash Flows."
-            ),
-            planned_capabilities=[
-                "Present value computation of projected explicit forecast period cash flows.",
-                "Perpetual Growth (Gordon Growth Model) terminal value formulation.",
-                "Exit Multiple Method terminal value formulation (e.g. EV/EBITDA).",
-                "Bridge from Enterprise Value to Equity Value (Cash, Debt, Minority Interest, Non-operating assets).",
-                "Implied per-share intrinsic value vs. current market pricing.",
-            ],
-            prerequisites=[
-                "Phase 4 Unlevered Free Cash Flow projections (Ready)",
-                "Phase 5 Weighted Average Cost of Capital (WACC)",
-            ],
-        )
+        render_dcf_page()
 
     elif selected_page == "Scenarios":
         render_placeholder_card(
