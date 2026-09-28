@@ -346,10 +346,77 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 ---
 
-### 19. Decoupling Rules for Phase 11 (Dynamic Excel Model Formula Linking)
+### 19. Reporting & Dynamic Financial Model Architecture (`src/reporting/`)
 
-1. **Analytical Source of Truth:** Phase 11 dynamic Excel workbooks will consume domain models (`HistoricalAnalysisBundle`, `ForecastResult`, `WaccResult`, `DcfValuationResult`, `ScenarioAnalysisResult`, `SensitivityMatrixResult`) directly.
-2. **Formula Translation Layer:** In Phase 11, calculation formulas will be written as native Excel formulas (e.g. `=SUM(...)`, `=NPV(...)`, `=EBIT*(1-t)`) inside worksheet cells rather than hardcoded static numeric values, enabling live auditing and sensitivity recalculation inside Microsoft Excel.
-3. **Dashboard Separation:** The dashboard layer (`app/pages/dashboard.py` and `src/dashboard/charts.py`) remains strictly an interactive exploration interface and does not alter underlying saved scenario models or database state.
+| Module | Core Responsibility |
+| :--- | :--- |
+| `dynamic_excel_export.py` | `DynamicExcelModelGenerator`: Builds multi-sheet, formula-linked spreadsheet workbooks via `openpyxl`. Maintains an in-memory coordinate registry (`coords`) mapping cell addresses for dynamic formula linking across Assumptions, Forecast, WACC, and DCF Valuation sheets. Configures `wb.calculation.fullCalcOnLoad = True` for auto-recalculation upon opening in spreadsheet applications. |
+| `excel_export.py` | `ExcelReportGenerator`: Multi-sheet static reporting workbook generator providing pre-calculated values formatted for print and presentation distribution. |
+| `pdf_export.py` | `PdfReportGenerator`: Publication-grade pure-Python PDF 1.4 report generator with executive summary cards, dynamic pagination, and disclaimers. |
+| `csv_export.py` | `CsvReportGenerator`: Tabular CSV exporters for valuation summaries, financial statements, and sensitivity grids. |
+| `engine.py` | `ReportEngine`: Coordinates compilation of `ReportBundle` from underlying domain engines and repositories without duplicating financial logic. |
+
+---
+
+### 20. Dynamic Excel Model Formula Linking & Coordinate Registry
+
+1. **Decoupled Coordinate Registry Pattern:**
+   - Because valuation projects feature variable historical statement periods and configurable forecast horizons (3 to 10 years), cell locations cannot be hardcoded.
+   - `DynamicExcelModelGenerator` maintains an internal coordinate mapping dictionary (`coords: Dict[str, Any]`) populated dynamically as each sheet is built:
+     - `assump_drivers`: Maps forecast driver row cells (`rev_growth`, `gross_margin`, `ebitda_margin`, `ebit_margin`, `opex_pct`, `dna_pct`, `capex_pct`, `dso`, `dio`, `dpo`, `tax_rate`) to column indices.
+     - `assump_wacc`: Maps CAPM and debt inputs (`rf`, `beta`, `erp`, `kd_pre`, `tax_rate`, `debt_amt`, `equity_amt`).
+     - `assump_tv`: Maps terminal value parameters (`tv_method`, `perp_growth`, `exit_mult`).
+     - `assump_bridge`: Maps EV-to-Equity balance sheet reconciliation items (`cash`, `debt`, `minority`, `preferred`, `other`, `shares`).
+     - `forecast_cells`: Tracks exact column cells for revenue, COGS, OpEx, EBITDA, D&A, EBIT, NOPAT, CapEx, Operating NWC, $\Delta\text{NWC}$, and resulting UFCF.
+     - `wacc_cells`: Tracks calculated after-tax cost of debt, total capital, capital weights, and blended WACC cell.
+     - `dcf_cells`: Tracks discount factors, discounted cash flows, cumulative PV of cash flows, terminal value, PV of terminal value, Enterprise Value, balance sheet items, Equity Value, and implied share price.
+
+2. **Inter-Sheet Formula Relationships:**
+   - **Forecast Schedule:**
+     - First projected period: `='Historical Financials'!<Latest_Rev> * (1 + Assumptions!<RevGrowth_1>)`
+     - Subsequent periods: `=<Prev_Year_Rev> * (1 + Assumptions!<RevGrowth_t>)`
+     - Gross Profit: `=<Rev_Cell> * Assumptions!<GrossMargin_Cell>`
+     - OpEx: `=<Rev_Cell> * Assumptions!<OpExPct_Cell>`
+     - EBITDA: `=<GrossProfit_Cell> - <OpEx_Cell>`
+     - D&A: `=<Rev_Cell> * Assumptions!<DnaPct_Cell>`
+     - EBIT: `=<EBITDA_Cell> - <Dna_Cell>`
+     - Tax on EBIT: `=<EBIT_Cell> * Assumptions!<TaxRate_Cell>`
+     - NOPAT: `=<EBIT_Cell> - <Tax_Cell>`
+     - CapEx: `=<Rev_Cell> * Assumptions!<CapExPct_Cell>`
+     - Operating NWC: `=<Rev_Cell> * ((Assumptions!<DSO> + Assumptions!<DIO> - Assumptions!<DPO>) / 365)`
+     - $\Delta\text{NWC}$: `=<NWC_t> - <NWC_{t-1}>`
+     - Unlevered Free Cash Flow (UFCF): `=<NOPAT> + <D&A> - <CapEx> - <Delta_NWC>`
+   - **WACC Formulation:**
+     - Cost of Equity: `=Assumptions!<Rf> + Assumptions!<Beta> * Assumptions!<ERP>`
+     - After-Tax Cost of Debt: `=Assumptions!<Kd> * (1 - Assumptions!<TaxRate>)`
+     - Total Capital: `=SUM(Assumptions!<Equity>, Assumptions!<Debt>)`
+     - Weight of Equity / Debt: `=Assumptions!<Equity> / <Total_Capital>`, `=Assumptions!<Debt> / <Total_Capital>`
+     - Blended WACC: `=(<We> * <Ke>) + (<Wd> * <Kd_after>)`
+   - **DCF Valuation & Equity Bridge:**
+     - Discount Factors: `=1 / (1 + WACC!<Wacc_Cell>)^<Period_t>`
+     - PV of UFCF: `=Forecast!<UFCF_t> * <Discount_Factor_t>`
+     - Cumulative PV: `=SUM(<PV_1>:<PV_N>)`
+     - Terminal Value (Gordon Growth): `=(Forecast!<UFCF_N> * (1 + Assumptions!<PerpGrowth>)) / (WACC!<Wacc_Cell> - Assumptions!<PerpGrowth>)`
+     - Terminal Value (Exit Multiple): `=Forecast!<Terminal_EBITDA> * Assumptions!<ExitMult>`
+     - PV of Terminal Value: `=<Terminal_Value> * <Terminal_Discount_Factor>`
+     - Enterprise Value: `=<PV_Forecast_Sum> + <PV_TV>`
+     - Implied Equity Value: `=<EV> + Assumptions!<Cash> - Assumptions!<Debt> - Assumptions!<Minority> - Assumptions!<Preferred> + Assumptions!<Other>`
+     - Implied Value per Share: `=<Equity_Value> / Assumptions!<Diluted_Shares>`
+
+3. **Cell Styling & Visual Hierarchy:**
+   - **User-Editable Inputs:** Styled with soft canary fill (`#FEF9C3`), warm gold borders (`#CA8A04`), and dark brown text (`#713F12`) to communicate user configurability.
+   - **Calculated Formulas:** Styled with default clear backgrounds and bold/medium navy labels (`#0F172A`).
+   - **Section Headers:** Institutional navy fill (`#1E3A8A`), bold white text (`#FFFFFF`), and 11pt typography.
+   - **Table Headers:** Slate fill (`#F1F5F9`), bold dark slate text (`#1E293B`), and top/bottom borders.
+   - **Totals & Summary Rows:** Double-bottom underline border (`border_bottom_double`) and bold typography.
+
+4. **Spreadsheet Recalculation Behavior & Limitations:**
+   - The `openpyxl` Python library writes formula strings (e.g. `"=SUM(B5:F5)"`) but does not execute a formula calculation engine.
+   - To ensure immediate calculation when opened, the generator sets:
+     ```python
+     wb.calculation.fullCalcOnLoad = True
+     ```
+   - When opened in Microsoft Excel, LibreOffice Calc, or Google Sheets, the spreadsheet application automatically recalculates all formula trees and displays the evaluated numbers.
+   - Saved scenario comparisons, sensitivity grids, and Monte Carlo percentile statistics are preserved from stored model records with clear labels distinguishing live-calculated cells from static scenario reference tables.
 
 

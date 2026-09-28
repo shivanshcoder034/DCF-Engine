@@ -7,6 +7,7 @@ WACC, DCF valuations, scenario sets, and sensitivity simulations.
 
 from src.reporting.csv_export import CsvReportGenerator
 from src.reporting.engine import ReportEngine
+from src.reporting.dynamic_excel_export import DynamicExcelModelGenerator
 from src.reporting.excel_export import ExcelReportGenerator
 from src.reporting.models import (
     ReportBundle,
@@ -29,6 +30,7 @@ __all__ = [
     "ReportEngine",
     "ReportService",
     "ExcelReportGenerator",
+    "DynamicExcelModelGenerator",
     "PdfReportGenerator",
     "CsvReportGenerator",
 ]

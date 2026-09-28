@@ -179,15 +179,26 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 11: Dynamic Excel Financial Model Formula Linking *(Status: Planned — Next Active Phase)*
-- **Objective:** Export auditable multi-tab spreadsheet models with active dynamic formulas.
-- **Key Capabilities:**
-  - Multi-tab Excel workbook generation via `openpyxl` with live formulas linking historicals, forecast, WACC, and DCF.
-  - Professional institutional financial formatting, color-coded assumption cells, and dynamic recalculation.
+### Phase 11: Dynamic Excel Financial Model Formula Linking *(Status: Complete)*
+- **Objective:** Upgrade the institutional spreadsheet export engine into a dynamic, formula-linked financial model workbook using `openpyxl` that recalculates live in spreadsheet software upon assumption adjustments.
+- **Key Deliverables:**
+  - Dedicated dynamic spreadsheet export engine (`DynamicExcelModelGenerator` in `src/reporting/dynamic_excel_export.py`).
+  - Coordinate registry mapping tracking dynamic cell locations across variable forecast horizons for auditable formula references.
+  - 8 institutional-grade workbook sheets:
+    1. **Read Me & Model Guide:** Metadata, units, period conventions, cell style legend, sheet index, live formula architecture, and recalculation notes.
+    2. **Historical Financials:** Reported vs. derived statement items, historical margins, working capital turnover, and historical cash flows.
+    3. **Assumptions:** Visually distinguished user-editable assumption cells (light yellow fill `#FEF9C3` with dark gold border `#CA8A04`) for revenue growth, margins, OpEx %, D&A %, CapEx %, turnover days, tax rates, CAPM inputs, borrowing spreads, terminal value method, and balance sheet bridge items.
+    4. **Forecast:** Active Excel formulas linking forward schedules directly to the Assumptions sheet (`=Prev_Rev * (1 + Assumptions!Growth)`, `=Rev * Margin`, NOPAT, CapEx, Operating NWC, $\Delta\text{NWC}$, and resulting $\text{UFCF} = \text{NOPAT} + \text{D\&A} - \text{CapEx} - \Delta\text{NWC}$).
+    5. **WACC:** Formulaic CAPM Cost of Equity (`=Rf + Beta * ERP`), after-tax Cost of Debt (`=Kd * (1 - t)`), capital structure weights, and blended WACC (`=(We * Ke) + (Wd * Kd_after)`).
+    6. **DCF Valuation:** Explicit discounting schedule linking UFCF to discount factors (`=UFCF * Discount_Factor`), cumulative PV sum (`=SUM(...)`), terminal value formulas (Gordon Growth perpetuity or Exit Multiple), terminal discount factor, PV of TV, Enterprise Value (`=PV_Forecast + PV_TV`), and complete EV-to-Equity balance sheet bridge (`=EV + Cash - Debt - Minority - Preferred + Other`) down to Implied Value per Share (`=Equity_Value / Diluted_Shares`).
+    7. **Scenario Analysis:** Live-linked Base Case referencing the DCF Valuation sheet, with stored Bull/Bear cases clearly labeled.
+    8. **Sensitivity & Simulation:** Formatted 2D matrix with marked baseline (`★`) and Monte Carlo percentile statistics.
+  - Spreadsheet auto-recalculation directive: configured `wb.calculation.fullCalcOnLoad = True` so spreadsheet applications (Excel, Calc, Sheets) perform a full calculation upon workbook open.
+  - Dual export workflow in Streamlit Export Center (`app/pages/reports.py`): offers both **Static Excel Report (.xlsx)** for executive archiving and **Dynamic Financial Model (.xlsx)** for interactive modeling.
 
 ---
 
-### Phase 12: AI-Assisted Document & Financial Statement Analysis *(Status: Planned)*
+### Phase 12: AI-Assisted Document & Financial Statement Analysis *(Status: Planned — Next Active Phase)*
 - **Objective:** Provide automated synthesis of regulatory financial filings.
 - **Key Capabilities:**
   - Automated extraction of financial footnotes and risk factors from 10-K and 10-Q reports.

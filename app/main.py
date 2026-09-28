@@ -51,7 +51,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 10 Active", status="Dashboard Engine Ready")
+        render_phase_badge(phase_text="Phase 11 Active", status="Dynamic Model Linking Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -89,8 +89,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 10 • AI-Powered DCF Valuation Engine. "
-            "Financial dashboards & visual analytics active."
+            "© Phase 11 • AI-Powered DCF Valuation Engine. "
+            "Dynamic formula-linked financial model exports active."
         )
 
     return selected_page
@@ -107,22 +107,23 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 10 Active")
+    st.subheader("📌 Project Status: Phase 11 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Financial Dashboards & Interactive Visualizations Active**\n\n"
-            "Phase 10 delivers connected visual analytics and interactive exploration for valuation projects. "
-            "Analysts can explore historical performance trends, forward-looking forecast cash flows, "
-            "DCF Enterprise-to-Equity valuation waterfalls, cash flow discounting schedules, and linked "
-            "scenario and sensitivity simulations within an institutional dashboard environment."
+            "**Current Status: Dynamic Excel Financial Model Formula Linking Active**\n\n"
+            "Phase 11 delivers live formula-linked spreadsheet exports generated via `openpyxl`. "
+            "The dynamic financial model features full cross-sheet formulas connecting editable Assumptions "
+            "to multi-year Forecast statements, WACC estimations, DCF cash flow discounting schedules, "
+            "terminal value derivations, and the Enterprise-to-Equity valuation bridge. "
+            "Users can edit operational and valuation drivers directly in Excel and observe instant recalculation."
         )
         st.info(
-            "**Notice:** Phase 11 will deliver dynamic openpyxl spreadsheet financial model formula linking. "
-            "Dashboard metrics reflect deterministic model outputs based on user-supplied assumptions and do not "
-            "constitute investment advice or future return predictions."
+            "**Notice:** Phase 12 will deliver AI-assisted document and SEC regulatory filing analysis. "
+            "Exported financial models reflect deterministic formula relationships and do not constitute "
+            "investment advice or future price predictions."
         )
 
     with status_col2:
@@ -144,9 +145,9 @@ def render_home_page() -> None:
         {"Phase": "Phase 7", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
         {"Phase": "Phase 8", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver heatmaps, Monte Carlo", "Status": "Complete"},
         {"Phase": "Phase 9", "Title": "Reporting, Presentation & Export Engine", "Focus": "Multi-page PDF reports, openpyxl Excel models, CSVs, in-app preview", "Status": "Complete"},
-        {"Phase": "Phase 10 (Current)", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration", "Status": "Complete"},
-        {"Phase": "Phase 11 (Next)", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
-        {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
+        {"Phase": "Phase 10", "Title": "Financial Dashboards & Interactive Visualizations", "Focus": "Interactive Plotly valuation waterfalls, cash flow dashboards, and scenario exploration", "Status": "Complete"},
+        {"Phase": "Phase 11 (Current)", "Title": "Dynamic Excel Model Formula Linking", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Complete"},
+        {"Phase": "Phase 12 (Next)", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
     ]
 
     for item in roadmap_data:

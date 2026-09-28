@@ -19,6 +19,7 @@ from src.dcf.services import DcfService
 from src.forecasting.services import ForecastService
 from src.reporting.csv_export import CsvReportGenerator
 from src.reporting.engine import ReportEngine
+from src.reporting.dynamic_excel_export import DynamicExcelModelGenerator
 from src.reporting.excel_export import ExcelReportGenerator
 from src.reporting.models import (
     ReportBundle,
@@ -623,19 +624,38 @@ def render_reports_page() -> None:
             )
             st.caption(f"File: `{pdf_filename}` ({len(pdf_bytes) / 1024:.1f} KB)")
 
-        # 2. Excel Export
+        # 2. Dynamic Formula-Linked Excel Model Export
         with e_col2:
-            st.markdown("#### 📊 Excel Model Workbook (.xlsx)")
+            st.markdown("#### ⚡ Dynamic Financial Model (.xlsx)")
             st.caption(
-                "Institutional multi-sheet spreadsheet covering executive summaries, "
-                "historical actuals, forecast schedules, WACC, DCF, and sensitivity tables."
+                "Multi-tab spreadsheet with live Excel formulas linking Assumptions to Forecast, "
+                "WACC, DCF valuation, and Equity bridge. Supports real-time driver editing in spreadsheet software."
             )
-            with st.spinner("Generating Excel workbook..."):
+            with st.spinner("Generating dynamic formula-linked model..."):
+                dyn_excel_bytes = DynamicExcelModelGenerator.generate_workbook(report_bundle)
+
+            dyn_filename = f"{clean_slug}_Dynamic_DCF_Model_{date_str}.xlsx"
+            st.download_button(
+                label="⚡ Download Dynamic Model (.xlsx)",
+                data=dyn_excel_bytes,
+                file_name=dyn_filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="btn_download_dyn_excel",
+                use_container_width=True,
+            )
+            st.caption(f"File: `{dyn_filename}` ({len(dyn_excel_bytes) / 1024:.1f} KB)")
+
+        # 3. Static Excel Report & CSV Exports
+        with e_col3:
+            st.markdown("#### 📊 Static Excel & CSV Exports")
+            st.caption("Snapshot tabular workbook and standardized CSV data tables.")
+
+            with st.spinner("Generating static Excel workbook..."):
                 excel_bytes = ExcelReportGenerator.generate_workbook(report_bundle)
 
-            excel_filename = f"{clean_slug}_DCF_Financial_Model_{date_str}.xlsx"
+            excel_filename = f"{clean_slug}_DCF_Financial_Report_{date_str}.xlsx"
             st.download_button(
-                label="📊 Download Excel Workbook",
+                label="📊 Download Static Excel (.xlsx)",
                 data=excel_bytes,
                 file_name=excel_filename,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -643,11 +663,6 @@ def render_reports_page() -> None:
                 use_container_width=True,
             )
             st.caption(f"File: `{excel_filename}` ({len(excel_bytes) / 1024:.1f} KB)")
-
-        # 3. CSV Exports
-        with e_col3:
-            st.markdown("#### 📑 Tabular CSV Exports")
-            st.caption("Standardized CSV tables for individual modeling modules.")
 
             csv_summary = CsvReportGenerator.generate_valuation_summary_csv(report_bundle)
             st.download_button(
@@ -683,8 +698,9 @@ def render_reports_page() -> None:
 
         st.markdown("---")
         st.info(
-            "💡 **Export Integrity Note:** Exported Excel workbooks and CSV files contain static numerical results "
-            "matching the selected valuation case. Underlying forecast and WACC formulas remain decoupled in Python."
+            "💡 **Formula Linking Note:** The **Dynamic Financial Model (.xlsx)** contains active cell formulas "
+            "(`=SUM`, `=NPV`, `=IF`, etc.) that automatically recalculate when opened in Microsoft Excel, LibreOffice Calc, "
+            "or Google Sheets. Users can adjust highlighted assumption cells directly in their spreadsheet application."
         )
 
     # =========================================================================

@@ -36,8 +36,8 @@ class AppConfig:
     # Application Metadata
     app_name: str = "AI-Powered DCF Valuation and Sensitivity Engine"
     app_short_name: str = "DCF Valuation Engine"
-    app_version: str = "0.10.0"
-    app_phase: str = "Phase 10: Financial Dashboards & Interactive Visualizations"
+    app_version: str = "0.11.0"
+    app_phase: str = "Phase 11: Dynamic Excel Financial Model Formula Linking"
 
     # Environment
     environment: str = field(
