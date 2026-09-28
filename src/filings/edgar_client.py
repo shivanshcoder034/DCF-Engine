@@ -68,7 +68,16 @@ class SecEdgarClient:
         req = urllib.request.Request(url, headers=req_headers)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as response:
-                return response.read()
+                raw = response.read()
+                # Decompress gzip responses (SEC EDGAR often returns gzip-encoded content)
+                encoding = response.headers.get('Content-Encoding', '')
+                if encoding == 'gzip' or (len(raw) >= 2 and raw[0] == 0x1f and raw[1] == 0x8b):
+                    import gzip as _gzip
+                    try:
+                        raw = _gzip.decompress(raw)
+                    except Exception:
+                        pass  # Not actually gzip, return as-is
+                return raw
         except urllib.error.HTTPError as exc:
             logger.warning("SEC EDGAR HTTP error %d for URL: %s", exc.code, url)
             if exc.code == 403:
