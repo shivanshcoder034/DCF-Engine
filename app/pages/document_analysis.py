@@ -15,7 +15,7 @@ import pandas as pd
 
 from src.data.models import Company, ValuationProject
 from src.data.schemas import STANDARD_LINE_ITEMS, StatementType
-from src.data.services import CompanyService, ValuationProjectService
+from src.data.services import CompanyService, ProjectService
 from src.filings.models import (
     ExtractedStatementItem,
     FilingAnalysisBundle,
@@ -305,7 +305,7 @@ def render_document_analysis_page() -> None:
                 st.subheader("Target Valuation Project Approval")
 
                 # Select project
-                projects = ValuationProjectService.list_projects()
+                projects = ProjectService.list_projects()
                 if not projects:
                     st.warning("No valuation projects found. Please create a valuation project first.")
                 else:

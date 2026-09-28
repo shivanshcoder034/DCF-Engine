@@ -166,6 +166,10 @@ class ProjectService:
             return repo.delete(project_id)
 
 
+# Alias for backward and cross-module compatibility
+ValuationProjectService = ProjectService
+
+
 class FinancialDataService:
     """Business operations for historical financial data points and import batches."""
 
