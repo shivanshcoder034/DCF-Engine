@@ -226,9 +226,58 @@ The **AI-Powered DCF Valuation and Sensitivity Engine** is architected as an ins
 
 ---
 
-### 13. Decoupling Rules for Phase 8 (Sensitivity Analysis & Simulation)
+---
 
-1. **Sensitivity Analysis (Phase 8):** Will evaluate multi-dimensional 2D matrices (e.g. WACC vs. Perpetual Growth Rate $g$, or WACC vs. Exit Multiple) using the pure calculation functions in `src/dcf/calculations.py`.
-2. **Monte Carlo Simulation (Phase 8):** Will sample operational and market distributions to generate empirical valuation percentiles while reusing the decoupled forecasting and DCF layers.
-3. **Decoupled Architecture:** Presentation code in `app/` consumes only typed public models and service interfaces from `src/scenarios/`, `src/dcf/`, `src/wacc/`, `src/forecasting/`, and `src/analysis/`.
+### 13. Sensitivity Analysis & Simulation Architecture (`src/sensitivity/`)
+
+| Module | Core Responsibility |
+| :--- | :--- |
+| `models.py` | Strongly typed dataclasses: `AxisRangeConfig` (min, max, step), `DistributionConfig` (distribution type and parameters), `SensitivityCellResult` (individual grid cell with baseline intersection flag and validity status), `SensitivityMatrixResult` (2D valuation matrix), `MonteCarloSummaryStats` (mean, median, standard deviation, percentiles), `MonteCarloSimulationResult` (sampling outputs, draw counts, statistics, histograms), and `SensitivityConfig` (persisted configuration container). |
+| `engine.py` | `SensitivityEngine`: Evaluates deterministic 2D sensitivity matrices by keeping baseline forecast cash flows constant and recalculating WACC and terminal value models; executes reproducible Monte Carlo simulations using `numpy.random.default_rng` across Normal, Triangular, and Uniform distributions with full invalid draw accounting. |
+| `services.py` | `SensitivityService`: Coordinates saving, loading, listing, and deleting named `SensitivityModel` entities in the SQLite database. |
+| `formatting.py` | Generates formatted 2D tabular matrices, interactive Plotly heatmaps with cell hover diagnostics and baseline markers (`★`), Monte Carlo summary statistics tables, and empirical distribution histograms. |
+
+---
+
+### 14. Sensitivity Matrix & Monte Carlo Mathematical Models
+
+1. **Two-Dimensional Valuation Sensitivity Matrix:**
+   - Evaluates a 2D parameter grid across:
+     - **Row Axis:** Discount Rate / WACC ($\text{WACC}_1, \dots, \text{WACC}_R$).
+     - **Column Axis:** Terminal Value parameter ($\text{Param}_1, \dots, \text{Param}_C$), representing Perpetual Growth Rate ($g$) under Gordon Growth, or Exit Multiple under the Exit Multiple method.
+   - **Optimization & Decoupling:** Operational Unlevered Free Cash Flows (UFCF) and terminal year EBITDA are evaluated once from the baseline forecast, while discounting factors and terminal values are recalculated per cell.
+   - **Mathematical Constraint Enforcement:**
+     - For Gordon Growth: If $\text{WACC}_r \le g_c$, the denominator $(\text{WACC} - g)$ is non-positive. The cell is marked invalid with status `"invalid"` and reason `"WACC <= g"`. Outputs are strictly withheld rather than replaced with silent zeros.
+     - For Exit Multiple: If $\text{Multiple}_c \le 0$, the cell is marked invalid.
+   - **Baseline Intersection:** The exact cell corresponding to the baseline model's WACC and terminal parameter is identified and flagged (`★`).
+
+2. **Monte Carlo Probabilistic Valuation Simulation:**
+   - **Reproducibility Guarantee:** Random number generation is seeded via user-controlled `random_seed` using `numpy.random.default_rng(abs(seed))`, ensuring deterministic results for identical inputs.
+   - **Supported Statistical Distributions:**
+     - *Normal Distribution:* Sampled with mean $\mu$ and standard deviation $\sigma$: $X \sim \mathcal{N}(\mu, \sigma^2)$.
+     - *Triangular Distribution:* Sampled with lower bound $a$, mode $c$, and upper bound $b$: $X \sim \text{Triangular}(a, c, b)$.
+     - *Uniform Distribution:* Sampled with minimum $a$ and maximum $b$: $X \sim \mathcal{U}(a, b)$.
+   - **Selective Randomization:** Users can independently toggle simulation for:
+     - Revenue growth delta ($\Delta g_{\text{rev}}$ in percentage points)
+     - Operating margin delta ($\Delta m$ in percentage points)
+     - Cost of Capital / WACC (percentage rate)
+     - Terminal value parameter ($g$ percentage rate or Exit Multiple)
+   - **Invalid Draw Accounting & Discard Protocol:**
+     - If a random draw violates feasibility (e.g. sampled $\text{WACC} \le \text{sampled } g$, non-positive WACC, or non-positive exit multiple), it is recorded under `invalid_reasons` and excluded from valuation arrays.
+     - Discarded draws never contaminate the valid distribution or bias summary statistics.
+   - **Percentile Derivations:**
+     $$\text{Percentiles: } P_{10}, P_{25}, P_{50} \text{ (Median)}, P_{75}, P_{90}, \text{Min, Max, Mean, Std Dev}$$
+     Computed across valid draws for Enterprise Value, Equity Value, and Implied Intrinsic Value per Share.
+
+3. **Persistence Scope:**
+   - `SensitivityModel` records in SQLite store configuration parameters (matrix axis ranges, selected distributions, iteration count, and random seed). Raw simulated samples are re-evaluated deterministically on-demand to conserve database storage.
+
+---
+
+### 15. Decoupling Rules for Phase 9 (Financial Dashboards & Visualizations)
+
+1. **Dashboard Decoupling:** Phase 9 dashboards will consume typed result structures from historical analysis (`HistoricalAnalysisBundle`), forecasting (`ForecastResult`), WACC (`WaccResult`), DCF (`DcfValuationResult`), scenarios (`ScenarioAnalysisResult`), and sensitivity (`SensitivityMatrixResult`, `MonteCarloSimulationResult`).
+2. **Formula Integrity:** Presentation layers must not duplicate domain formulas or financial modeling mathematics.
+3. **Database Isolation:** All analytics, scenario models, and sensitivity configurations remain scoped to `ValuationProject` via foreign keys.
+
 

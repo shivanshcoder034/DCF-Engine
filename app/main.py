@@ -30,6 +30,7 @@ from app.pages.forecasting import render_forecasting_page
 from app.pages.wacc import render_wacc_page
 from app.pages.dcf import render_dcf_page
 from app.pages.scenarios import render_scenarios_page
+from app.pages.sensitivity import render_sensitivity_page
 
 
 def setup_page_configuration() -> None:
@@ -48,7 +49,7 @@ def render_sidebar() -> str:
         st.title("💼 DCF Engine")
         st.caption("Valuation & Sensitivity Engine")
 
-        render_phase_badge(phase_text="Phase 7 Active", status="Scenario Engine Ready")
+        render_phase_badge(phase_text="Phase 8 Active", status="Sensitivity Engine Ready")
 
         st.markdown("---")
         st.subheader("Navigation")
@@ -85,8 +86,8 @@ def render_sidebar() -> str:
 
         st.markdown("---")
         st.caption(
-            "© Phase 7 • AI-Powered DCF Valuation Engine. "
-            "Sensitivity analysis scheduled in Phase 8."
+            "© Phase 8 • AI-Powered DCF Valuation Engine. "
+            "Financial dashboards scheduled in Phase 9."
         )
 
     return selected_page
@@ -102,21 +103,23 @@ def render_home_page() -> None:
 
     # Status Banner
     st.markdown("---")
-    st.subheader("📌 Project Status: Phase 7 Active")
+    st.subheader("📌 Project Status: Phase 8 Active")
 
     status_col1, status_col2 = st.columns([2, 1])
 
     with status_col1:
         st.success(
-            "**Current Status: Scenario Analysis (Base / Bull / Bear) Active**\n\n"
-            "Phase 7 introduces comparative multi-case scenario valuation. Users can model Base, Bull, and Bear cases "
-            "by configuring explicit overrides for revenue growth (+/- pp), operating margin (+/- pp), WACC (+/- bps), "
-            "and terminal parameters (perpetual growth +/- bps or exit multiple +/- x). All calculations reuse the deterministic "
-            "Phase 4 forecast, Phase 5 WACC, and Phase 6 DCF engines with full auditability."
+            "**Current Status: Sensitivity Analysis & Simulation Active**\n\n"
+            "Phase 8 delivers multidimensional sensitivity analysis and Monte Carlo probabilistic simulation. "
+            "Analysts can stress-test valuation outputs across two-dimensional sensitivity matrices "
+            "(evaluating WACC vs. Perpetual Growth Rate or Exit Multiple) with interactive heatmaps, and run "
+            "deterministic, reproducible Monte Carlo simulations using Normal, Triangular, and Uniform distributions "
+            "with configurable random seeds."
         )
         st.info(
-            "**Notice:** Multi-dimensional 2D sensitivity matrices and Monte Carlo simulations are scheduled for Phase 8. "
-            "Scenario valuations represent mathematical calculations based on user-supplied assumptions and not certified investment advice."
+            "**Notice:** Interactive financial dashboards and dynamic Excel model exports are scheduled for Phases 9-11. "
+            "Sensitivity matrices and Monte Carlo simulations represent forward-looking mathematical evaluations based on user-supplied "
+            "assumptions and not certified investment advice."
         )
 
     with status_col2:
@@ -135,9 +138,9 @@ def render_home_page() -> None:
         {"Phase": "Phase 4", "Title": "Financial Forecasting & Projections", "Focus": "Driver-based revenue models, OpEx schedules, UFCF projections", "Status": "Complete"},
         {"Phase": "Phase 5", "Title": "WACC & Discount Rate Engine", "Focus": "CAPM, Beta estimation, cost of debt, tax shield, capital weighting", "Status": "Complete"},
         {"Phase": "Phase 6", "Title": "DCF Valuation & Terminal Value Engine", "Focus": "Discounting, Gordon Growth, Exit Multiples, Enterprise/Equity value", "Status": "Complete"},
-        {"Phase": "Phase 7 (Current)", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
-        {"Phase": "Phase 8 (Next)", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Planned"},
-        {"Phase": "Phase 9", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
+        {"Phase": "Phase 7", "Title": "Scenario Analysis (Base / Bull / Bear)", "Focus": "Bull/Bear scenarios, parameter overrides, cross-scenario comparisons", "Status": "Complete"},
+        {"Phase": "Phase 8 (Current)", "Title": "Sensitivity Analysis & Simulation", "Focus": "2D sensitivity matrices, driver tornado charts, Monte Carlo", "Status": "Complete"},
+        {"Phase": "Phase 9 (Next)", "Title": "Financial Dashboards & Visualizations", "Focus": "Interactive Plotly valuation and financial statement dashboards", "Status": "Planned"},
         {"Phase": "Phase 10", "Title": "Dynamic Excel Model Exports", "Focus": "Automated openpyxl workbooks with active spreadsheet formulas", "Status": "Planned"},
         {"Phase": "Phase 11", "Title": "Valuation Reports & Memos", "Focus": "Institutional PDF/Markdown summary memos and audit trails", "Status": "Planned"},
         {"Phase": "Phase 12", "Title": "AI-Assisted Document & Filings Analysis", "Focus": "Automated 10-K extraction, footnote parsing, and risk commentary", "Status": "Planned"},
@@ -210,24 +213,7 @@ def main() -> None:
         render_scenarios_page()
 
     elif selected_page == "Sensitivity Analysis":
-        render_placeholder_card(
-            title="🎯 Sensitivity Analysis & Simulation",
-            phase="Phase 8",
-            target_module="src.sensitivity",
-            description=(
-                "Rigorous multi-dimensional sensitivity matrices evaluating valuation volatility "
-                "in response to shifts in foundational assumptions."
-            ),
-            planned_capabilities=[
-                "Two-dimensional sensitivity tables (e.g., WACC vs. Long-Term Terminal Growth Rate).",
-                "Exit Multiple sensitivity matrices (e.g., WACC vs. Terminal EV/EBITDA Multiple).",
-                "Driver impact ranking and tornado charts.",
-                "Monte Carlo valuation distribution simulation.",
-            ],
-            prerequisites=[
-                "Phase 6 DCF valuation engine",
-            ],
-        )
+        render_sensitivity_page()
 
     elif selected_page == "Reports & Exports":
         render_placeholder_card(

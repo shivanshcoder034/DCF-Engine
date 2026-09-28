@@ -117,16 +117,26 @@ This roadmap establishes the 12-phase engineering progression for the platform. 
 
 ---
 
-### Phase 8: Sensitivity Analysis & Simulation *(Status: Planned — Next Active Phase)*
-- **Objective:** Evaluate valuation sensitivity to critical operational and discount rate drivers.
-- **Key Capabilities:**
-  - Two-dimensional sensitivity matrices (e.g. WACC vs. Terminal Growth Rate, WACC vs. Exit Multiple).
-  - Valuation driver ranking and visual tornado analysis.
-  - Monte Carlo probabilistic valuation distributions.
+### Phase 8: Sensitivity Analysis & Simulation *(Status: Complete)*
+- **Objective:** Evaluate valuation sensitivity to critical operational and discount rate drivers using 2D matrices and Monte Carlo simulations.
+- **Key Deliverables:**
+  - Dedicated sensitivity module (`src/sensitivity/`) decoupled from presentation code and database direct access.
+  - Two-dimensional valuation sensitivity matrices evaluating WACC vs. Perpetual Growth Rate ($g$) for Gordon Growth, or WACC vs. Exit Multiple for Exit Multiple cases.
+  - Configurable axis ranges (min, max, step) with guaranteed inclusion and distinct marking (`★`) of baseline model assumptions.
+  - Strict cell-level validity enforcement: cells where $\text{WACC} \le g$ or $\text{WACC} \le 0$ are withheld with informative labels rather than substituted zeros.
+  - Metric support for Enterprise Value, Equity Value, and Implied Intrinsic Value per Share.
+  - Interactive Plotly heatmap with cell hover tooltips, color gradients, and tabular matrix with CSV export.
+  - Optional Monte Carlo probabilistic simulation with configurable iteration count (50–2,000) and user-controlled random seed ensuring 100% reproducibility.
+  - Supported probability distributions: Normal ($\mu, \sigma$), Triangular ($a, c, b$), and Uniform ($a, b$) across revenue growth delta, operating margin delta, WACC, and terminal value assumptions.
+  - Explicit accounting and disclosure of invalid draws without contaminating valid valuation statistics.
+  - Full percentile summary statistics (Mean, Median, Std Dev, Min, P10, P25, P75, P90, Max) for Enterprise Value, Equity Value, and Implied Share Price.
+  - Plotly empirical distribution histograms with vertical reference lines for Median, P10, and P90 percentiles.
+  - Named persistence via `SensitivityModel` in SQLite (`database/dcf_engine.db`), supporting save, update, reload, and delete operations.
+  - Streamlit user interface (`app/pages/sensitivity.py`) with dedicated tabs for matrix, simulation, assumptions audit, and persistence.
 
 ---
 
-### Phase 9: Financial Dashboards & Interactive Visualizations *(Status: Planned)*
+### Phase 9: Financial Dashboards & Interactive Visualizations *(Status: Planned — Next Active Phase)*
 - **Objective:** Deliver interactive, institutional-grade visual analytics.
 - **Key Capabilities:**
   - Interactive Plotly valuation bridge waterfalls and historical financial performance charts.

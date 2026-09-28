@@ -36,8 +36,8 @@ class AppConfig:
     # Application Metadata
     app_name: str = "AI-Powered DCF Valuation and Sensitivity Engine"
     app_short_name: str = "DCF Valuation Engine"
-    app_version: str = "0.7.0"
-    app_phase: str = "Phase 7: Scenario Analysis"
+    app_version: str = "0.8.0"
+    app_phase: str = "Phase 8: Sensitivity Analysis & Simulation"
 
     # Environment
     environment: str = field(

@@ -2,7 +2,7 @@
 
 An institutional-grade financial modelling platform built in Python, designed to perform Discounted Cash Flow (DCF) valuations, scenario planning, multi-variable sensitivity analysis, and dynamic financial model exports.
 
-> **Active Development Status:** The repository has completed **Phase 7: Scenario Analysis (Base / Bull / Bear)**. The application features a multi-case valuation engine that compares Base, Bull, and Bear cases using the existing Phase 4 forecast, Phase 5 WACC, and Phase 6 DCF engines. Users can model assumption overrides in explicit percentage points (`pp`), basis points (`bps`), and multiple units (`x`), observe cross-scenario valuation matrices, analyze visual charts (EV & Equity Value, Implied Share Price, UFCF Cash Flow Trajectory, and EV Composition), inspect assumption audits, and persist named scenario sets in SQLite.
+> **Active Development Status:** The repository has completed **Phase 8: Sensitivity Analysis & Simulation**. The application features an institutional-grade multidimensional sensitivity engine offering Two-Dimensional Valuation Sensitivity Matrices (WACC vs. Perpetual Growth / Exit Multiple) with interactive Plotly heatmaps, and fully reproducible Monte Carlo probabilistic simulations supporting Normal, Triangular, and Uniform distributions with user-controlled random seeds, full invalid draw disclosure, and summary statistics.
 
 ---
 
@@ -10,7 +10,7 @@ An institutional-grade financial modelling platform built in Python, designed to
 
 The **AI-Powered DCF Valuation and Sensitivity Engine** provides corporate finance analysts, investors, and valuation practitioners with a transparent, structured, and auditable environment to evaluate publicly listed companies.
 
-Key capabilities delivered in Phases 1–7:
+Key capabilities delivered in Phases 1–8:
 - **Phase 1 (Foundation):** Clean decoupled architecture, centralized configuration using `pathlib.Path`, and modular Streamlit shell.
 - **Phase 2 (Data Management):** Persistent SQLite storage with SQLAlchemy ORM, company profiles, valuation project workspaces, manual three-statement data entry, and multi-step CSV/Excel spreadsheet imports with column auto-mapping and full audit provenance.
 - **Phase 3 (Historical Analysis):** Multi-year revenue growth, CAGRs, profitability margins (Gross, EBITDA, EBIT, Net), working capital dynamics, cash conversion cycles (DSO, DIO, DPO, CCC), operating cash flows, historical UFCF estimates, and accounting integrity audit diagnostics.
@@ -34,18 +34,23 @@ Key capabilities delivered in Phases 1–7:
   - **Enterprise-to-Equity Value Bridge:** Explicit line-item reconciliation adding Cash & Equivalents, deducting Interest-Bearing Debt, Minority Interest, and Preferred Stock, plus signed non-operating adjustments.
   - **Implied Intrinsic Share Price:** Evaluated as $\text{Equity Value} / \text{Diluted Shares Outstanding}$ with safe withholding when share count is absent.
   - **Named DCF Scenario Persistence:** Save, load, and version named DCF models (`DcfModel`) in SQLite.
-- **Phase 7 (Scenario Analysis — Current):**
+- **Phase 7 (Scenario Analysis):**
   - **Three Canonical Scenarios:** Standardized **Base**, **Bull**, and **Bear** valuation cases.
   - **Base Case Preservation:** Base case strictly reflects the selected saved forecast and WACC baseline without overrides.
-  - **Explicit User-Editable Overrides:**
-    - *Revenue growth adjustment:* in percentage points (`pp`).
-    - *Operating margin adjustment:* in percentage points (`pp`).
-    - *Cost of Capital (WACC) adjustment:* in basis points (`bps`, $100\text{ bps} = 1.0\%$).
-    - *Perpetual growth rate adjustment:* in basis points (`bps`) for Gordon Growth.
-    - *Exit multiple adjustment:* as a multiple change (`x`) for Exit Multiple.
+  - **Explicit User-Editable Overrides:** Revenue growth (pp), operating margin (pp), WACC (bps), perpetual growth rate (bps), and exit multiple (x).
   - **Transparent Auditing & Diagnostics:** Baseline vs. override vs. resulting assumption table, linked model provenance, and validation warnings when $\text{WACC} \le g$.
   - **Cross-Scenario Comparison & Visuals:** Side-by-side output matrix, grouped EV/Equity bar charts, implied share price comparison, cash flow trajectory lines, and EV composition stacked charts.
   - **Named Scenario Persistence:** Save, update, reload, and delete named scenario analysis sets (`ScenarioModel`) in SQLite.
+- **Phase 8 (Sensitivity Analysis & Simulation — Current):**
+  - **Two-Dimensional Sensitivity Matrices:** Evaluate WACC vs. Perpetual Growth Rate ($g$) or Exit Multiple, with editable ranges, steps, and guaranteed baseline intersection marking (`★`).
+  - **Enforced Mathematical Validity:** Cells violating $\text{WACC} > g$ or non-positive discount rates are safely withheld with explicit diagnostic labels rather than silent zeros.
+  - **Multi-Metric Support:** Computes Enterprise Value, Equity Value, and Implied Intrinsic Value per Share across the grid.
+  - **Interactive Heatmap Visualizations:** Plotly heatmaps with cell-level hover diagnostics, custom color scales, and CSV matrix export.
+  - **Optional Monte Carlo Simulation:** Random sampling across revenue growth, operating margin, WACC, and terminal assumptions with user-controlled iteration count (50–2,000) and random seed for 100% reproducibility.
+  - **Restrained Distribution Models:** Normal ($\mu, \sigma$), Triangular ($a, c, b$), and Uniform ($a, b$) with clearly labeled illustrative starting defaults.
+  - **Explicit Invalid-Draw Accounting:** Transparent counting and breakdown of invalid draws (e.g., $\text{WACC} \le g$) without contaminating valid sample statistics.
+  - **Summary Percentile Statistics & Histograms:** Mean, median, standard deviation, and percentiles (Min, P10, P25, P75, P90, Max) with Plotly distribution histograms and reference lines.
+  - **Named Persistence:** Save, reload, and delete named sensitivity configurations (`SensitivityModel`) in SQLite.
 
 ---
 
@@ -79,7 +84,8 @@ dcf-valuation-engine/
 │   │   ├── forecasting.py      # Financial forecasting & UFCF projection view
 │   │   ├── wacc.py             # WACC estimation, CAPM, cost of debt & capital structure view
 │   │   ├── dcf.py              # DCF valuation engine, cash flow discounting & equity bridge view
-│   │   └── scenarios.py        # Scenario analysis view, Base/Bull/Bear overrides & comparison
+│   │   ├── scenarios.py        # Scenario analysis view, Base/Bull/Bear overrides & comparison
+│   │   └── sensitivity.py      # Sensitivity analysis view, 2D matrix heatmap & Monte Carlo simulation
 │   └── components/             # Reusable UI elements (cards, badges)
 │       ├── __init__.py
 │       ├── badges.py
@@ -89,7 +95,7 @@ dcf-valuation-engine/
 │   ├── __init__.py
 │   ├── data/                   # Data management, persistence & validation layer
 │   │   ├── __init__.py
-│   │   ├── models.py           # SQLAlchemy ORM models (Company, ForecastModel, DcfModel, ScenarioModel, etc.)
+│   │   ├── models.py           # SQLAlchemy ORM models (Company, DcfModel, ScenarioModel, SensitivityModel, etc.)
 │   │   ├── database.py         # Engine configuration & session context manager
 │   │   ├── schemas.py          # Enums, standard line-item catalog & DTOs
 │   │   ├── validators.py       # Multi-field structural & accounting validator
@@ -130,7 +136,12 @@ dcf-valuation-engine/
 │   │   ├── engine.py           # ScenarioEngine applying overrides and executing 3-case DCFs
 │   │   ├── services.py         # ScenarioService for persisting named ScenarioModel records
 │   │   └── formatting.py       # Cross-scenario comparison, audit tables & Plotly comparison charts
-│   ├── sensitivity/            # 2D sensitivity matrices & simulation engine (Phase 8)
+│   ├── sensitivity/            # Sensitivity Analysis & Simulation Engine (Phase 8)
+│   │   ├── __init__.py
+│   │   ├── models.py           # AxisRangeConfig, DistributionConfig, SensitivityMatrixResult, MonteCarloSimulationResult
+│   │   ├── engine.py           # SensitivityEngine 2D matrix recalculation & Monte Carlo RNG loops
+│   │   ├── services.py         # SensitivityService for persisting named SensitivityModel records
+│   │   └── formatting.py       # 2D tabular matrices, Plotly heatmaps, Monte Carlo histograms & percentile stats
 │   └── exports/                # Dynamic openpyxl Excel models & report generators (Phase 10)
 │
 ├── database/                   # Designated directory for local SQLite database
@@ -201,8 +212,8 @@ python -m streamlit run app/main.py
 | **Phase 5** | **WACC & Discount Rate Engine** | CAPM, cost of debt, tax rates, capital weighting | **Complete** |
 | **Phase 6** | **DCF Valuation & Terminal Value** | Gordon Growth, Exit Multiples, Enterprise & Equity Value | **Complete** |
 | **Phase 7** | **Scenario Analysis (Base / Bull / Bear)** | Bull/Bear scenarios, parameter overrides, cross-scenario comparisons | **Complete** |
-| **Phase 8** | Sensitivity Analysis & Simulation | 2D sensitivity matrices, driver tornado charts, Monte Carlo | *Planned (Next)* |
-| **Phase 9** | Financial Dashboards | Interactive Plotly statement and valuation charts | *Planned* |
+| **Phase 8** | **Sensitivity Analysis & Simulation** | 2D sensitivity matrices, driver tornado charts, Monte Carlo | **Complete** |
+| **Phase 9** | Financial Dashboards & Visualizations | Interactive Plotly statement and valuation charts | *Planned (Next)* |
 | **Phase 10** | Dynamic Excel Model Exports | openpyxl financial models with dynamic formulas | *Planned* |
 | **Phase 11** | Valuation Reports & Memos | Institutional PDF/Markdown investment memos | *Planned* |
 | **Phase 12** | AI-Assisted Document Analysis | Automated 10-K extraction and footnote synthesis | *Planned* |
@@ -211,10 +222,10 @@ python -m streamlit run app/main.py
 
 ## 6. Current Limitations & Disclaimer
 
-### Current Limitations (Phase 7)
-- Multi-dimensional two-dimensional sensitivity matrices (e.g. WACC vs. Terminal Growth Rate, WACC vs. Exit Multiple) and Monte Carlo simulations belong to Phase 8.
+### Current Limitations (Phase 8)
+- Interactive financial statement ratio dashboards and cross-project portfolio analytics belong to Phase 9.
 - Dynamic multi-tab openpyxl Excel exports and automated investment memos belong to Phases 10–11.
-- Scenario intrinsic valuations illustrate sensitivity to user-configured adjustments and do not constitute certified investment advice, recommendations, or probabilistic guarantees.
+- Sensitivity matrices and Monte Carlo simulations illustrate valuation responses to user-selected driver ranges and probability distributions; they do not constitute certified investment advice, recommendations, confidence intervals, or guaranteed future prices.
 
 ### Important Disclaimer
 > **Not Investment Advice:** This software application is under active engineering development. It is designed for educational, research, and financial modelling purposes only. Nothing produced by this system constitutes financial, investment, legal, or tax advice. No valuation outputs should be relied upon for investment decisions without independent verification by qualified financial professionals.

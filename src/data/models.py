@@ -101,6 +101,11 @@ class ValuationProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    sensitivity_models = relationship(
+        "SensitivityModel",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ValuationProject id={self.id} name='{self.name}' company_id={self.company_id} status='{self.status}'>"
@@ -274,4 +279,26 @@ class ScenarioModel(Base):
 
     def __repr__(self) -> str:
         return f"<ScenarioModel id={self.id} name='{self.name}' project_id={self.project_id}>"
+
+
+class SensitivityModel(Base):
+    """Persisted sensitivity analysis and simulation configuration."""
+
+    __tablename__ = "sensitivity_models"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("valuation_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    dcf_model_id = Column(Integer, ForeignKey("dcf_models.id", ondelete="SET NULL"), nullable=True)
+    config_json = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    project = relationship("ValuationProject", back_populates="sensitivity_models")
+    dcf_model = relationship("DcfModel")
+
+    def __repr__(self) -> str:
+        return f"<SensitivityModel id={self.id} name='{self.name}' project_id={self.project_id}>"
 
